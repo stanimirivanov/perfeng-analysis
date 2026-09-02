@@ -1,0 +1,31 @@
+[project]
+name = "perfeng-analysis"
+version = "0.1.0"
+description = "Offline performance result normalization"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = ["jsonschema[format]>=4.26.0,<5", "referencing>=0.37.0,<0.38"]
+
+[project.scripts]
+perfeng-analysis = "perfeng_analysis.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["ruff>=0.16.4,<0.17", "ty>=0.0.1,<1", "types-jsonschema"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.terminal]
+error-on-warning = true
