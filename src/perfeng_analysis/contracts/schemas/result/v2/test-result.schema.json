@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://perfeng.dev/schemas/result/v2/test-result.schema.json",
+  "title": "Normalized metric with explicit support for unavailable sample counts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "metric",
+    "distribution"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "runId": {
+      "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/runId"
+    },
+    "metric": {
+      "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/metric"
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "samples": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Known positive observation count, or absent/null when unavailable. Never invent a count."
+        },
+        "mean": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/mean"
+        },
+        "median": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/median"
+        },
+        "p90": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/p90"
+        },
+        "p95": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/p95"
+        },
+        "p99": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/p99"
+        },
+        "stddev": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/stddev"
+        },
+        "min": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/min"
+        },
+        "max": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/max"
+        },
+        "cv": {
+          "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/distribution/properties/cv"
+        }
+      }
+    },
+    "thresholds": {
+      "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/thresholds"
+    },
+    "metadata": {
+      "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/metadata"
+    }
+  }
+}
