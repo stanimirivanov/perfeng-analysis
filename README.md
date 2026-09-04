@@ -143,6 +143,26 @@ reference-artifact.json` together to evaluate regression. All inputs are explici
 local files. The command performs no discovery, downloads, or uploads, and it
 never overwrites an existing output.
 
+## Container image
+
+Build and verify the Linux AMD64 runtime locally:
+
+```sh
+docker build --platform linux/amd64 -t perfeng-analysis:local-check .
+uv run --locked python scripts/image.py verify perfeng-analysis:local-check
+```
+
+The default entry point is the existing normalization CLI. Run report generation
+with `--entrypoint perfeng-report`. The image is digest-pinned, contains the
+locked production environment, and runs as UID/GID 65532 without network access
+being required by either command. Mount explicit read-only inputs and a writable
+output location when it is used by a Job.
+
+The manual [image publication workflow](docs/images.md) builds and verifies the
+image and optionally publishes it to GHCR. Deployments must pin the verified
+final image digest printed by that workflow, not its mutable build tag, local
+image ID, Python base digest, or uv image digest.
+
 ## Contracts and provenance
 
 The wheel includes nine immutable schemas and the upstream license from
