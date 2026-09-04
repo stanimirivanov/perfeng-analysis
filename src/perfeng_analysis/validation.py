@@ -112,6 +112,14 @@ def parse_policy(data: bytes) -> dict[str, Any]:
     return policy
 
 
+def parse_normalized(data: bytes) -> dict[str, Any]:
+    normalized = parse_object(data)
+    validate("normalized-result/v1/normalized-result.schema.json", normalized)
+    check_normalized(normalized)
+
+    return normalized
+
+
 def parse_analysis(data: bytes, policy_data: bytes | None = None) -> dict[str, Any]:
     report = parse_object(data)
     validate("analysis/v1/analysis-result.schema.json", report)
@@ -147,6 +155,36 @@ def check_policy(policy: dict[str, Any]) -> None:
         slo = rule.get("slo", {})
         if "min" in slo and "max" in slo and slo["min"] > slo["max"]:
             raise ValueError("SLO minimum exceeds maximum")
+
+
+def check_normalized(normalized: dict[str, Any]) -> None:
+    window = normalized["measurementWindow"]
+    start = datetime.fromisoformat(window["start"])
+    end = datetime.fromisoformat(window["end"])
+    created = datetime.fromisoformat(normalized["createdAt"])
+    if start >= end or created < end:
+        raise ValueError("Invalid normalized measurement window or creation time")
+
+    artifact_ids: set[str] = set()
+    artifact_uris: set[str] = set()
+    for artifact in normalized["sourceArtifacts"]:
+        check_artifact(artifact)
+        identity = artifact["id"].lower()
+        if identity in artifact_ids or artifact["uri"] in artifact_uris:
+            raise ValueError("Duplicate normalized source artifact identity")
+        if artifact["runId"] != normalized["runId"]:
+            raise ValueError("Normalized source artifact belongs to another run")
+        artifact_ids.add(identity)
+        artifact_uris.add(artifact["uri"])
+
+    metrics: set[str] = set()
+    for result in normalized["results"]:
+        if result["runId"] != normalized["runId"]:
+            raise ValueError("Normalized metric belongs to another run")
+        name = result["metric"]["name"]
+        if name in metrics:
+            raise ValueError("Duplicate normalized metric")
+        metrics.add(name)
 
 
 def check_analysis(report: dict[str, Any], policy: dict[str, Any] | None = None) -> None:
