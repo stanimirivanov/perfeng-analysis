@@ -1,7 +1,7 @@
 [project]
 name = "perfeng-analysis"
-version = "0.4.0"
-description = "Offline performance result normalization, validation, and policy evaluation"
+version = "0.5.0"
+description = "Offline performance result normalization, evaluation, and reporting"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"

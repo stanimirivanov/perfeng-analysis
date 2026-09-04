@@ -111,6 +111,21 @@ policy's pinned baseline and verifying that the supplied reference bytes and
 artifact ID are that approved immutable artifact. This function does not perform
 baseline selection or statistical significance testing.
 
+## Build an analysis report
+
+`build_analysis_report(...)` assembles a complete `analysis/v1` document from
+the exact candidate bytes, policy bytes, artifact reference, producer identity,
+and caller-supplied creation time. An optional verified reference pair enables
+regression comparison. Without one, configured regression rules are reported as
+`INCONCLUSIVE`, not silently passed.
+
+The builder verifies artifact sizes and SHA-256 checksums against the supplied
+bytes, binds artifact run identities to their normalized documents, records the
+exact policy checksum, forces non-blocking mode, and rejects reports that predate
+their inputs. It validates the completed document before returning an isolated
+object. Retrieving or publishing bytes and attesting the producer image remain
+the caller's responsibilities.
+
 ## Contracts and provenance
 
 The wheel includes nine immutable schemas and the upstream license from
