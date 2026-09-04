@@ -1,6 +1,7 @@
 # perfeng-analysis
 
-Standalone Python library and CLI for offline k6 summary normalization.
+Standalone Python library and CLI for offline k6 summary normalization and
+validation of performance policies and analysis-result claims.
 Use Python 3.12 and uv. No database, orchestration, or sibling repository is
 required. Ruff handles lint/formatting; ty handles type checking.
 
@@ -66,10 +67,23 @@ result. Colliding aliases require explicit selection with --metric.
 Raw files are never rewritten. Non-finite numbers and duplicate JSON keys are
 rejected. Basic schema validation is not a scientific quality check.
 
+## Validate analysis claims
+
+`parse_policy(policy_bytes)` validates a performance-policy document.
+`parse_analysis(report_bytes)` validates a report as a self-contained claim;
+passing the exact policy bytes as the second argument additionally verifies the
+policy checksum, identity, rule coverage, metric selectors, quality evidence,
+SLO arithmetic, and regression arithmetic. Both entry points reject duplicate
+JSON keys and non-finite numbers and resolve schemas only from the wheel.
+
+Validation does not retrieve artifacts, select a baseline, recompute statistics,
+or generate a verdict. Callers must verify artifact bytes before trusting the
+measurements referenced by a structurally and semantically valid report.
+
 ## Contracts and provenance
 
-The wheel includes seven immutable schemas and the upstream license from
-perfeng-contracts commit 8363ec6d54721a4750761df37c80465e9f76be4d (bundle 0.4.0).
+The wheel includes nine immutable schemas and the upstream license from
+perfeng-contracts commit 82baa78c9a08851431688f647e69a09d66da42f1 (bundle 0.6.0).
 The packaged contracts/lock.json checks their exact bytes before use. No
 runtime schema fetching occurs. Update the snapshot in a reviewed change.
 
@@ -91,4 +105,4 @@ CI also installs the built wheel in an isolated environment and repeats the
 tests, so missing packaged contract resources fail validation.
 
 Point/window normalization, storage, image publication, quality assessment,
-SLO/regression analysis, and baseline selection are not implemented here.
+SLO/regression evaluation, and baseline selection are not implemented here.
