@@ -1,0 +1,64 @@
+name: Build and optionally publish analysis image
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the validated main-branch image to GHCR
+        type: boolean
+        default: false
+        required: true
+permissions:
+  contents: read
+jobs:
+  image:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - run: uv sync --locked
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked ty check
+      - run: uv run --locked python -m unittest discover -s tests -v
+      - name: Build and verify Linux AMD64 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          image="$repository:sha-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "RUNNER_REPOSITORY=$repository" >> "$GITHUB_ENV"
+          echo "RUNNER_IMAGE=$image" >> "$GITHUB_ENV"
+          docker build --platform linux/amd64 --build-arg VCS_REF="$GITHUB_SHA" -t "$image" .
+          uv run --locked python scripts/image.py verify "$image" "$GITHUB_SHA"
+      - name: Authenticate only for an explicitly requested publication
+        if: inputs.publish
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Publish and verify registry-addressable bytes
+        if: inputs.publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker push "$RUNNER_IMAGE"
+          reference="$(uv run --locked python scripts/image.py reference "$RUNNER_IMAGE" "$RUNNER_REPOSITORY")"
+          docker pull "$reference"
+          uv run --locked python scripts/image.py verify "$reference" "$GITHUB_SHA"
+          printf 'Verified analysis image: %s\n\nSource revision: %s\n\nPlatform: linux/amd64\n' "$reference" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Build-only summary
+        if: ${{ !inputs.publish }}
+        run: echo "Build and tests passed. No image was published; no registry digest was allocated." >> "$GITHUB_STEP_SUMMARY"
+      - name: Log out
+        if: ${{ always() && inputs.publish }}
+        run: docker logout ghcr.io
