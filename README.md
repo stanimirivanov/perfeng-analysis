@@ -126,6 +126,23 @@ their inputs. It validates the completed document before returning an isolated
 object. Retrieving or publishing bytes and attesting the producer image remain
 the caller's responsibilities.
 
+The separate CLI keeps normalization compatibility intact and writes its result
+with exclusive creation:
+
+```sh
+uv run --locked perfeng-report \
+  --candidate normalized-result.json \
+  --candidate-artifact normalized-artifact.json \
+  --policy performance-policy.json \
+  --producer-image REGISTRY/IMAGE@sha256:ACTUAL-DIGEST \
+  --output analysis-result.json
+```
+
+Add `--reference reference-result.json` and `--reference-artifact
+reference-artifact.json` together to evaluate regression. All inputs are explicit
+local files. The command performs no discovery, downloads, or uploads, and it
+never overwrites an existing output.
+
 ## Contracts and provenance
 
 The wheel includes nine immutable schemas and the upstream license from

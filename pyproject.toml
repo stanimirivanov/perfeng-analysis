@@ -1,6 +1,6 @@
 [project]
 name = "perfeng-analysis"
-version = "0.5.0"
+version = "0.6.0"
 description = "Offline performance result normalization, evaluation, and reporting"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,6 +9,7 @@ dependencies = ["jsonschema[format]>=4.26.0,<5", "referencing>=0.37.0,<0.38"]
 
 [project.scripts]
 perfeng-analysis = "perfeng_analysis.cli:main"
+perfeng-report = "perfeng_analysis.report_cli:main"
 
 [build-system]
 requires = ["hatchling>=1.27,<2"]
