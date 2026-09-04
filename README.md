@@ -80,6 +80,21 @@ Validation does not retrieve artifacts, select a baseline, recompute statistics,
 or generate a verdict. Callers must verify artifact bytes before trusting the
 measurements referenced by a structurally and semantically valid report.
 
+## Evaluate a candidate
+
+`evaluate_candidate(normalized_bytes, policy_bytes)` evaluates each policy rule
+in declaration order. It checks the normalized envelope's run, source-artifact,
+and metric identities before using a measurement. Missing metrics, statistics,
+sample counts, or required variability evidence produce `INCONCLUSIVE`; unit
+mismatches produce `INVALID`; and a coefficient of variation above the policy
+maximum produces `UNSTABLE`. SLO bounds are inclusive and yield `PASS` or `FAIL`
+only when measurement quality passes.
+
+The returned evaluations conform to the analysis-result rule shape. Regression
+is explicitly `NOT_EVALUATED`: reference selection and candidate-versus-reference
+comparison are a separate stage. Producer-supplied legacy thresholds never
+override the platform policy.
+
 ## Contracts and provenance
 
 The wheel includes nine immutable schemas and the upstream license from
@@ -104,5 +119,5 @@ manifests and image digests are explicitly synthetic test data.
 CI also installs the built wheel in an isolated environment and repeats the
 tests, so missing packaged contract resources fail validation.
 
-Point/window normalization, storage, image publication, quality assessment,
-SLO/regression evaluation, and baseline selection are not implemented here.
+Point/window normalization, storage, image publication, regression evaluation,
+and baseline selection are not implemented here.
