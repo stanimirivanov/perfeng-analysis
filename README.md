@@ -95,6 +95,22 @@ is explicitly `NOT_EVALUATED`: reference selection and candidate-versus-referenc
 comparison are a separate stage. Producer-supplied legacy thresholds never
 override the platform policy.
 
+## Compare with an approved reference
+
+`compare_candidate(candidate_bytes, reference_bytes, policy_bytes,
+reference_artifact_id=...)` evaluates the same quality and SLO outcomes and adds
+a point-estimate regression comparison. It supports absolute and relative
+practical differences and applies the policy's lower-is-better or
+higher-is-better direction. Meeting the configured degradation threshold is a
+failure; improvements and smaller changes pass.
+
+Both candidate and reference quality must pass. Missing reference evidence,
+direction mismatches, zero-valued relative references, and non-representable
+effects produce `INCONCLUSIVE`. The caller remains responsible for resolving the
+policy's pinned baseline and verifying that the supplied reference bytes and
+artifact ID are that approved immutable artifact. This function does not perform
+baseline selection or statistical significance testing.
+
 ## Contracts and provenance
 
 The wheel includes nine immutable schemas and the upstream license from
@@ -119,5 +135,5 @@ manifests and image digests are explicitly synthetic test data.
 CI also installs the built wheel in an isolated environment and repeats the
 tests, so missing packaged contract resources fail validation.
 
-Point/window normalization, storage, image publication, regression evaluation,
-and baseline selection are not implemented here.
+Point/window normalization, storage, image publication, baseline selection, and
+statistical significance testing are not implemented here.
