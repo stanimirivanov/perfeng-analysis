@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "kind": "PlaywrightMeasurements",
+  "runId": "perf-20260902-130000-a1b2c3d5",
+  "testId": "search-browser",
+  "workload": {
+    "id": "search-browser-smoke",
+    "version": "1.0.0",
+    "profile": "smoke",
+    "sha256": "dcbb9c0f92dc16917a24f7eb52c95689a2091f893b64ccb219246af51a7da3c7"
+  },
+  "scenario": {
+    "cacheProfile": "warm",
+    "contextReuse": "per-run",
+    "pageReuse": "per-iteration",
+    "warmupIterations": 2,
+    "measurementIterations": 3
+  },
+  "diagnosticMode": "lightweight",
+  "environment": {
+    "profile": {
+      "id": "windows-mainstream",
+      "version": "1.0.0"
+    },
+    "fingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "runtime": {
+    "playwrightVersion": "1.62.1",
+    "nodeVersion": "24.18.0",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "browser": {
+    "name": "chromium",
+    "version": "140.0.7339.16",
+    "headless": false,
+    "viewport": {
+      "width": 1536,
+      "height": 864
+    },
+    "deviceScaleFactor": 1.25
+  },
+  "measurementWindow": {
+    "start": "2026-09-02T13:00:00Z",
+    "end": "2026-09-02T13:01:00Z"
+  },
+  "createdAt": "2026-09-02T13:01:01Z",
+  "measurements": [
+    {"iteration": 1, "name": "ui.search.action_to_visible_ms", "durationMs": 161},
+    {"iteration": 2, "name": "ui.search.action_to_visible_ms", "durationMs": 168},
+    {"iteration": 3, "name": "ui.search.action_to_visible_ms", "durationMs": 159}
+  ]
+}

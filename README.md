@@ -1,7 +1,7 @@
 # perfeng-analysis
 
-Standalone Python library and CLI for offline k6 summary normalization and
-validation of performance policies and analysis-result claims.
+Standalone Python library and CLI for offline k6 and Playwright normalization,
+plus validation of performance policies and analysis-result claims.
 Use Python 3.12 and uv. No database, orchestration, or sibling repository is
 required. Ruff handles lint/formatting; ty handles type checking.
 
@@ -24,11 +24,21 @@ uv run --locked perfeng-analysis --manifest raw-result.json --summary summary.js
   --layout legacy-export --summary-covers-window --output normalized-result.json
 ```
 
+For a native Playwright measurement artifact, omit the k6-only layout and
+window assertion:
+
+```sh
+uv run --locked perfeng-analysis --manifest raw-result.json \
+  --summary playwright-measurements.json --artifact-id ACTUAL-DECLARED-UUID \
+  --producer-image REGISTRY/IMAGE@sha256:ACTUAL-DIGEST \
+  --output normalized-result.json
+```
+
 Replace placeholders with actual capture metadata. The producer image is the
 analysis image actually executed, not the k6 image or an invented local digest.
 The CLI checks its syntax; the orchestration adapter must attest correspondence.
 
-The manifest must satisfy raw-result/v1, contain the selected summary artifact,
+The manifest must satisfy raw-result/v1 or raw-result/v2, contain the selected artifact,
 and have valid run identities, unique artifact IDs/URIs, and ordered timestamps.
 Summary bytes must match its checksum and size. Only the artifact actually used
 appears in sourceArtifacts. Output satisfies normalized-result/v1 with result/v2
@@ -42,9 +52,18 @@ of the summary's capture: a later JSONL adapter must filter points first.
 
 ## Supported inputs and semantics
 
-Choose the layout explicitly: typed accepts the prototype's type/values objects;
+For k6, choose the layout explicitly: typed accepts the prototype's type/values objects;
 legacy-export accepts the flat summary-export shape tested with k6 2.2.0.
 The new-machine-readable-summary format is not supported. Do not guess its layout.
+
+Playwright input must use `playwright-measurements/v2`. Each duration name is
+normalized as a lower-is-better latency in milliseconds because the source
+contract declares `durationMs`; no other browser metric semantics are inferred.
+Every selected metric must contain exactly one value for every declared
+measurement iteration. The adapter calculates mean, median, p90, p95, p99,
+population standard deviation, minimum, maximum, and CV. Percentiles use linear
+interpolation (Hyndman-Fan type 7). The document's run, test, workload, window,
+and creation time must agree with the raw manifest.
 
 Supported mappings are explicit in src/perfeng_analysis/normalizer.py:
 HTTP duration/error rate/throughput, checkout/search duration (legacy and current
@@ -165,8 +184,8 @@ image ID, Python base digest, or uv image digest.
 
 ## Contracts and provenance
 
-The wheel includes nine immutable schemas and the upstream license from
-perfeng-contracts commit 82baa78c9a08851431688f647e69a09d66da42f1 (bundle 0.6.0).
+The wheel includes twelve immutable schemas and the upstream license from
+perfeng-contracts commit 001146ef212c55c013b12b3a0b167ffc3770f3fc (bundle 0.12.0).
 The packaged contracts/lock.json checks their exact bytes before use. No
 runtime schema fetching occurs. Update the snapshot in a reviewed change.
 
@@ -187,5 +206,5 @@ manifests and image digests are explicitly synthetic test data.
 CI also installs the built wheel in an isolated environment and repeats the
 tests, so missing packaged contract resources fail validation.
 
-Point/window normalization, storage, image publication, baseline selection, and
-statistical significance testing are not implemented here.
+Point/window filtering, storage, baseline selection, and statistical
+significance testing are not implemented here.

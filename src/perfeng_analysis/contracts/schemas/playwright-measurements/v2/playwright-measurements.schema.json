@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://perfeng.dev/schemas/playwright-measurements/v2/playwright-measurements.schema.json",
+  "title": "Playwright semantic measurements with execution context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "runId",
+    "testId",
+    "workload",
+    "scenario",
+    "diagnosticMode",
+    "environment",
+    "runtime",
+    "browser",
+    "measurementWindow",
+    "createdAt",
+    "measurements"
+  ],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 2},
+    "kind": {"const": "PlaywrightMeasurements"},
+    "runId": {
+      "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/runId"
+    },
+    "testId": {
+      "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/id"
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "profile", "sha256"],
+      "properties": {
+        "id": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/id"
+        },
+        "version": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/version"
+        },
+        "profile": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/properties/profile"
+        },
+        "sha256": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cacheProfile",
+        "contextReuse",
+        "pageReuse",
+        "warmupIterations",
+        "measurementIterations"
+      ],
+      "properties": {
+        "cacheProfile": {"enum": ["cold", "warm"]},
+        "contextReuse": {"enum": ["per-iteration", "per-run"]},
+        "pageReuse": {"enum": ["per-iteration", "per-run"]},
+        "warmupIterations": {"type": "integer", "minimum": 0},
+        "measurementIterations": {"type": "integer", "minimum": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"cacheProfile": {"const": "cold"}}},
+          "then": {
+            "properties": {
+              "contextReuse": {"const": "per-iteration"},
+              "pageReuse": {"const": "per-iteration"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"cacheProfile": {"const": "warm"}}},
+          "then": {"properties": {"contextReuse": {"const": "per-run"}}}
+        },
+        {
+          "if": {"properties": {"pageReuse": {"const": "per-run"}}},
+          "then": {"properties": {"contextReuse": {"const": "per-run"}}}
+        }
+      ]
+    },
+    "diagnosticMode": {
+      "enum": ["baseline", "lightweight", "trace", "memory", "smoothness"]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "fingerprint"],
+      "properties": {
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version"],
+          "properties": {
+            "id": {
+              "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/id"
+            },
+            "version": {
+              "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/version"
+            }
+          }
+        },
+        "fingerprint": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playwrightVersion", "nodeVersion", "platform", "architecture"],
+      "properties": {
+        "playwrightVersion": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/version"
+        },
+        "nodeVersion": {
+          "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/version"
+        },
+        "platform": {"enum": ["linux", "darwin", "win32"]},
+        "architecture": {"enum": ["x64", "arm64"]}
+      }
+    },
+    "browser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "headless", "viewport", "deviceScaleFactor"],
+      "properties": {
+        "name": {"enum": ["chromium", "firefox", "webkit"]},
+        "version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"
+        },
+        "headless": {"type": "boolean"},
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        },
+        "deviceScaleFactor": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "measurementWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"$ref": "#/$defs/timestamp"},
+        "end": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "createdAt": {"$ref": "#/$defs/timestamp"},
+    "measurements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["iteration", "name", "durationMs"],
+        "properties": {
+          "iteration": {"type": "integer", "minimum": 1},
+          "name": {
+            "$ref": "https://perfeng.dev/schemas/result/v1/test-result.schema.json#/properties/metric/properties/name"
+          },
+          "durationMs": {"type": "number", "minimum": 0}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:[0-5]\\d(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})$"
+    }
+  }
+}
