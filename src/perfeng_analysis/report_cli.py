@@ -8,7 +8,7 @@ from pathlib import Path
 from jsonschema.exceptions import ValidationError
 
 from . import __version__
-from .report import build_analysis_report
+from .report import ReferenceInput, build_analysis_report
 from .validation import parse_object
 
 
@@ -19,6 +19,13 @@ def main() -> int:
     parser.add_argument("--policy", type=Path, required=True)
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--reference-artifact", type=Path)
+    parser.add_argument(
+        "--baseline",
+        action="append",
+        default=[],
+        nargs=4,
+        metavar=("BASELINE_ID", "VERSION", "RESULT", "ARTIFACT"),
+    )
     parser.add_argument("--producer-image", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -33,6 +40,15 @@ def main() -> int:
             if args.reference_artifact is not None
             else None
         )
+        references = [
+            ReferenceInput(
+                baseline_id,
+                version,
+                Path(result_path).read_bytes(),
+                parse_object(Path(artifact_path).read_bytes()),
+            )
+            for baseline_id, version, result_path, artifact_path in args.baseline
+        ]
         report = build_analysis_report(
             candidate_data,
             candidate_artifact,
@@ -45,6 +61,7 @@ def main() -> int:
             created_at=datetime.now(UTC).isoformat(),
             reference_data=reference_data,
             reference_artifact=reference_artifact,
+            references=references,
         )
         encoded = json.dumps(report, indent=2, allow_nan=False) + "\n"
         with args.output.open("x", encoding="utf-8", newline="\n") as output:

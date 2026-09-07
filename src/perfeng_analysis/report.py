@@ -2,11 +2,23 @@
 
 import hashlib
 import json
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from .evaluator import compare_candidate, evaluate_candidate
+from .evaluator import compare_candidate_references
 from .validation import parse_analysis, parse_normalized, parse_policy, validate
+
+
+@dataclass(frozen=True)
+class ReferenceInput:
+    """Bind one policy baseline identity to normalized bytes and their artifact claim."""
+
+    baseline_id: str
+    version: str
+    data: bytes
+    artifact: dict[str, Any]
 
 
 def build_analysis_report(
@@ -18,29 +30,41 @@ def build_analysis_report(
     created_at: str,
     reference_data: bytes | None = None,
     reference_artifact: dict[str, Any] | None = None,
+    references: Sequence[ReferenceInput] = (),
 ) -> dict[str, Any]:
     if (reference_data is None) != (reference_artifact is None):
         raise ValueError("Reference bytes and artifact must be supplied together")
+    if references and reference_data is not None:
+        raise ValueError("Legacy and policy-keyed references cannot be combined")
 
     validate("artifact/v1/artifact-reference.schema.json", candidate_artifact)
-    if reference_artifact is not None:
-        validate("artifact/v1/artifact-reference.schema.json", reference_artifact)
     candidate = parse_normalized(candidate_data)
     policy = parse_policy(policy_data)
-    if reference_data is None:
-        evaluations = evaluate_candidate(candidate_data, policy_data)
-        _mark_missing_references(evaluations, candidate, policy)
-        references = []
-    else:
+    selected = tuple(references)
+    if reference_data is not None:
         if reference_artifact is None:
             raise ValueError("Reference artifact is required with reference bytes")
-        evaluations = compare_candidate(
-            candidate_data,
-            reference_data,
-            policy_data,
-            reference_artifact_id=reference_artifact["id"],
-        )
-        references = [reference_artifact]
+        identities = _policy_reference_identities(policy)
+        if len(identities) != 1:
+            raise ValueError("Legacy reference input requires exactly one policy baseline")
+        baseline_id, version = identities.pop()
+        selected = (ReferenceInput(baseline_id, version, reference_data, reference_artifact),)
+
+    reference_data_by_identity: dict[tuple[str, str], tuple[bytes, str]] = {}
+    reference_artifacts = []
+    for reference in selected:
+        identity = (reference.baseline_id, reference.version)
+        if identity in reference_data_by_identity:
+            raise ValueError("Policy baseline reference is duplicated")
+        validate("artifact/v1/artifact-reference.schema.json", reference.artifact)
+        reference_data_by_identity[identity] = (reference.data, reference.artifact["id"])
+        reference_artifacts.append(reference.artifact)
+
+    evaluations = compare_candidate_references(
+        candidate_data,
+        policy_data,
+        reference_data_by_identity,
+    )
 
     report = {
         "schemaVersion": 1,
@@ -57,7 +81,7 @@ def build_analysis_report(
             "mode": policy["spec"]["mode"],
         },
         "candidateArtifact": candidate_artifact,
-        "referenceArtifacts": references,
+        "referenceArtifacts": reference_artifacts,
         "blocking": False,
         "evaluations": evaluations,
     }
@@ -69,12 +93,13 @@ def build_analysis_report(
     ):
         raise ValueError("Analysis cannot predate the candidate normalized result")
     _verify_artifact_bytes(candidate_data, validated["candidateArtifact"])
-    if reference_data is not None:
-        reference = parse_normalized(reference_data)
-        reference_claim = validated["referenceArtifacts"][0]
+    claims = {claim["id"]: claim for claim in validated["referenceArtifacts"]}
+    for reference_input in selected:
+        reference = parse_normalized(reference_input.data)
+        reference_claim = claims[reference_input.artifact["id"]]
         if reference_claim["runId"] != reference["runId"]:
             raise ValueError("Reference artifact run does not match its normalized result")
-        _verify_artifact_bytes(reference_data, reference_claim)
+        _verify_artifact_bytes(reference_input.data, reference_claim)
         if datetime.fromisoformat(validated["createdAt"]) < datetime.fromisoformat(
             reference["createdAt"]
         ):
@@ -83,25 +108,12 @@ def build_analysis_report(
     return validated
 
 
-def _mark_missing_references(
-    evaluations: list[dict[str, Any]],
-    candidate: dict[str, Any],
-    policy: dict[str, Any],
-) -> None:
-    results = {result["metric"]["name"]: result for result in candidate["results"]}
-    for rule, evaluation in zip(policy["spec"]["rules"], evaluations, strict=True):
-        if "regression" not in rule:
-            continue
-        result = results.get(rule["metric"]["name"])
-        value = None if result is None else result["distribution"].get(rule["metric"]["statistic"])
-        reason = (
-            "The approved reference artifact is unavailable."
-            if evaluation["quality"]["status"] == "PASS"
-            else "Candidate measurement quality did not pass."
-        )
-        evaluation["regression"] = {"status": "INCONCLUSIVE", "reasons": [reason]}
-        if value is not None:
-            evaluation["regression"]["candidateValue"] = value
+def _policy_reference_identities(policy: dict[str, Any]) -> set[tuple[str, str]]:
+    return {
+        (rule["regression"]["reference"]["baselineId"], rule["regression"]["reference"]["version"])
+        for rule in policy["spec"]["rules"]
+        if "regression" in rule
+    }
 
 
 def _verify_artifact_bytes(data: bytes, artifact: dict[str, Any]) -> None:
