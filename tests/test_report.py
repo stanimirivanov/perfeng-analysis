@@ -190,6 +190,59 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(partial["evaluations"][1]["regression"]["status"], "INCONCLUSIVE")
         self.assertNotIn("referenceArtifactId", partial["evaluations"][1]["regression"])
 
+        shared_claim = artifact(first, first_document["runId"], REFERENCE_ARTIFACT_ID)
+        shared = build_analysis_report(
+            candidate,
+            artifact(candidate, RUN_ID, CANDIDATE_ARTIFACT_ID),
+            encode(policy),
+            producer=producer(),
+            created_at="2026-09-02T13:02:00Z",
+            references=[
+                ReferenceInput("approved-search-browser", "1.0.0", first, shared_claim),
+                ReferenceInput("approved-search-throughput", "2.0.0", first, shared_claim),
+            ],
+        )
+        self.assertEqual(shared["referenceArtifacts"], [shared_claim])
+        self.assertEqual(
+            shared["evaluations"][0]["regression"]["referenceArtifactId"],
+            REFERENCE_ARTIFACT_ID,
+        )
+        self.assertEqual(
+            shared["evaluations"][1]["regression"]["referenceArtifactId"],
+            REFERENCE_ARTIFACT_ID,
+        )
+
+    def test_rejects_conflicting_claims_for_one_reference_artifact_id(self):
+        policy = json.loads(fixture("policy/browser.json"))
+        second_rule = copy.deepcopy(policy["spec"]["rules"][0])
+        second_rule["id"] = "search-throughput"
+        second_rule["metric"]["name"] = "ui.search.requests"
+        second_rule["regression"]["reference"]["baselineId"] = "approved-search-throughput"
+        policy["spec"]["rules"].append(second_rule)
+
+        candidate_document = normalized_result()
+        second_result = copy.deepcopy(candidate_document["results"][0])
+        second_result["metric"]["name"] = "ui.search.requests"
+        candidate_document["results"].append(second_result)
+        candidate = encode(candidate_document)
+        reference = encode(reference_result())
+        claim = artifact(reference, reference_result()["runId"], REFERENCE_ARTIFACT_ID)
+        changed_claim = dict(claim)
+        changed_claim["uri"] = changed_claim["uri"].replace("result.json", "changed.json")
+
+        with self.assertRaisesRegex(ValueError, "conflicting evidence"):
+            build_analysis_report(
+                candidate,
+                artifact(candidate, RUN_ID, CANDIDATE_ARTIFACT_ID),
+                encode(policy),
+                producer=producer(),
+                created_at="2026-09-02T13:02:00Z",
+                references=[
+                    ReferenceInput("approved-search-browser", "1.0.0", reference, claim),
+                    ReferenceInput("approved-search-throughput", "1.0.0", reference, changed_claim),
+                ],
+            )
+
     def test_rejects_reference_not_selected_by_policy(self):
         candidate = encode(normalized_result())
         reference = encode(reference_result())
