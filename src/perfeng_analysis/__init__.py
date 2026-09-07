@@ -2,11 +2,13 @@
 
 from .evaluator import compare_candidate, evaluate_candidate
 from .normalizer import K6Normalizer
+from .playwright_normalizer import PlaywrightNormalizer
 from .report import build_analysis_report
 from .validation import parse_analysis, parse_normalized, parse_policy
 
 __all__ = [
     "K6Normalizer",
+    "PlaywrightNormalizer",
     "build_analysis_report",
     "compare_candidate",
     "evaluate_candidate",
@@ -14,4 +16,4 @@ __all__ = [
     "parse_normalized",
     "parse_policy",
 ]
-__version__ = "0.6.0"
+__version__ = "0.7.0"

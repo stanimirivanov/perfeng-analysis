@@ -76,7 +76,12 @@ def validate(name: str, value: Any) -> None:
 
 
 def check_manifest(manifest: dict[str, Any]) -> None:
-    validate("raw-result/v1/raw-result.schema.json", manifest)
+    if not isinstance(manifest, dict):
+        raise ValueError("Expected a raw-result object")
+    version = manifest.get("schemaVersion")
+    if version not in {1, 2}:
+        raise ValueError("Unsupported raw-result schema version")
+    validate(f"raw-result/v{version}/raw-result.schema.json", manifest)
     start = datetime.fromisoformat(manifest["measurementWindow"]["start"])
     end = datetime.fromisoformat(manifest["measurementWindow"]["end"])
     created = datetime.fromisoformat(manifest["createdAt"])

@@ -1,15 +1,18 @@
 {
   "repository": "https://github.com/stanimirivanov/perfeng-contracts",
-  "commit": "82baa78c9a08851431688f647e69a09d66da42f1",
-  "version": "0.6.0",
+  "commit": "001146ef212c55c013b12b3a0b167ffc3770f3fc",
+  "version": "0.12.0",
   "files": {
     "schemas/normalized-result/v1/normalized-result.schema.json": "0f6fd53007cbc9391cc73b875925e6eb1ecbad67a2d22fb808fdf7e532e027a3",
     "schemas/result/v2/test-result.schema.json": "329efa05dd181d4ff787a913795998e9e780050cd2174dfe0db04d917885e802",
     "schemas/result/v1/test-result.schema.json": "8bcb480ef6d7e1fc8468683759539d79e09cae12c2866d6a81f9d35903588134",
     "schemas/raw-result/v1/raw-result.schema.json": "98fafe06ad81b7c8930313d120353b540eb0ff633203f48e1135c9dae154026d",
+    "schemas/raw-result/v2/raw-result.schema.json": "73262bdd28fe034516871d315e93271345a5ab2c252fc433b544b380de51a4e7",
+    "schemas/playwright-measurements/v2/playwright-measurements.schema.json": "ba2e674060413ec7944a2a905440ab0c4388e9ff2713c2b349b5a7c334036758",
     "schemas/artifact/v1/artifact-reference.schema.json": "b1328d1ead8ca62f118bb00bcdae738ad434f3c3e18f1a579f5e28ebf924dcf2",
     "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
     "schemas/catalogue/v1/test-catalogue.schema.json": "b0897a5b7b43d981d4d12bda1992b046530b07a77910ee495a4be087eacad722",
+    "schemas/catalogue/v2/test-catalogue.schema.json": "96a65ca5cf3c903a590033e3304a82d4e41dd54e67efbd1928e1cd943337619a",
     "schemas/workload/v1/workload.schema.json": "593212bf904b613593014984cbe7ac62b17a3aed6d4663565a630f821bc0c454",
     "schemas/policy/v1/performance-policy.schema.json": "942e445736bd770db0721faa40e9c9dec61e6a4620550f2806e05a59f4ef0de2",
     "schemas/analysis/v1/analysis-result.schema.json": "d2395bfb7f2768929893d7265497a3758b8686ffc1cae1013e54abff58b38567"

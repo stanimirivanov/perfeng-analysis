@@ -10,6 +10,7 @@ from jsonschema.exceptions import ValidationError
 
 from . import __version__
 from .normalizer import K6Normalizer
+from .playwright_normalizer import PlaywrightNormalizer, check_playwright_manifest
 from .validation import check_manifest, parse_json, validate
 
 
@@ -19,11 +20,10 @@ def main() -> int:
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--artifact-id", required=True)
     parser.add_argument("--producer-image", required=True)
-    parser.add_argument("--layout", choices=["typed", "legacy-export"], required=True)
+    parser.add_argument("--layout", choices=["typed", "legacy-export"])
     parser.add_argument(
         "--summary-covers-window",
         action="store_true",
-        required=True,
         help="Assert summary covers exactly the manifest measurement window",
     )
     parser.add_argument("--metric", action="append")
@@ -32,13 +32,11 @@ def main() -> int:
     try:
         manifest = parse_json(args.manifest.read_bytes())
         check_manifest(manifest)
-        if manifest["producer"]["name"] != "k6":
-            raise ValueError("Expected k6 raw producer")
         matches = [a for a in manifest["artifacts"] if a["id"].lower() == args.artifact_id.lower()]
         if len(matches) != 1:
             raise ValueError("Summary artifact ID is not declared")
         artifact = matches[0]
-        if artifact["format"] != "k6-summary-json" or artifact["mediaType"] != "application/json":
+        if artifact["mediaType"] != "application/json":
             raise ValueError("Unsupported raw artifact format")
         raw = args.summary.read_bytes()
         if (
@@ -46,16 +44,33 @@ def main() -> int:
             or hashlib.sha256(raw).hexdigest() != artifact["sha256"]
         ):
             raise ValueError("Summary checksum/size mismatch")
-        results = K6Normalizer().normalize(
-            parse_json(raw), manifest["runId"], args.metric, layout=args.layout
-        )
+        source = parse_json(raw)
+        if artifact["format"] == "k6-summary-json":
+            if manifest["producer"]["name"] != "k6":
+                raise ValueError("Expected k6 raw producer")
+            if args.layout is None or not args.summary_covers_window:
+                raise ValueError("k6 normalization requires layout and window assertion")
+            results = K6Normalizer().normalize(
+                source, manifest["runId"], args.metric, layout=args.layout
+            )
+        elif artifact["format"] == "playwright-measurements/v2":
+            if manifest["producer"]["name"] != "playwright":
+                raise ValueError("Expected Playwright raw producer")
+            if args.layout is not None or args.summary_covers_window:
+                raise ValueError("Playwright measurements define their own layout and window")
+            if not isinstance(source, dict):
+                raise ValueError("Expected a Playwright measurements object")
+            check_playwright_manifest(source, manifest)
+            results = PlaywrightNormalizer().normalize(source, args.metric)
+        else:
+            raise ValueError("Unsupported raw artifact format")
         now = datetime.now(UTC)
         if now < datetime.fromisoformat(manifest["createdAt"]):
             raise ValueError("Raw manifest creation time is in the future")
         result = {
             "schemaVersion": 1,
             "kind": "NormalizedResult",
-            "contractsVersion": "0.4.0",
+            "contractsVersion": manifest["contractsVersion"],
             "runId": manifest["runId"],
             "testId": manifest["testId"],
             "workload": manifest["workload"],
