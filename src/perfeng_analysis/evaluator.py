@@ -1,6 +1,7 @@
 """Conservative candidate, SLO, and practical-difference evaluation."""
 
 import math
+from collections.abc import Mapping
 from typing import Any
 from uuid import UUID
 
@@ -26,28 +27,83 @@ def compare_candidate(
     *,
     reference_artifact_id: str,
 ) -> list[dict[str, Any]]:
+    policy = parse_policy(policy_data)
+    references = {
+        (rule["regression"]["reference"]["baselineId"], rule["regression"]["reference"]["version"])
+        for rule in policy["spec"]["rules"]
+        if "regression" in rule
+    }
+    if not references:
+        candidate = parse_normalized(candidate_data)
+        reference = parse_normalized(reference_data)
+        _check_test_identity(candidate, policy)
+        _check_test_identity(reference, policy)
+        if candidate["runId"] == reference["runId"]:
+            raise ValueError("Candidate and reference must come from different runs")
+        if not _canonical_uuid(reference_artifact_id):
+            raise ValueError("Reference artifact ID must be a canonical UUID")
+
+        return compare_candidate_references(candidate_data, policy_data, {})
+    if len(references) != 1:
+        raise ValueError("Single-reference comparison requires exactly one policy baseline")
+
+    return compare_candidate_references(
+        candidate_data,
+        policy_data,
+        {references.pop(): (reference_data, reference_artifact_id)},
+    )
+
+
+def compare_candidate_references(
+    candidate_data: bytes,
+    policy_data: bytes,
+    references: Mapping[tuple[str, str], tuple[bytes, str]],
+) -> list[dict[str, Any]]:
     candidate = parse_normalized(candidate_data)
-    reference = parse_normalized(reference_data)
     policy = parse_policy(policy_data)
     _check_test_identity(candidate, policy)
-    _check_test_identity(reference, policy)
-    if candidate["runId"] == reference["runId"]:
-        raise ValueError("Candidate and reference must come from different runs")
-    if not _canonical_uuid(reference_artifact_id):
-        raise ValueError("Reference artifact ID must be a canonical UUID")
+
+    expected = {
+        (rule["regression"]["reference"]["baselineId"], rule["regression"]["reference"]["version"])
+        for rule in policy["spec"]["rules"]
+        if "regression" in rule
+    }
+    if not set(references).issubset(expected):
+        raise ValueError("Reference input is not selected by the policy")
+
+    parsed_references: dict[tuple[str, str], tuple[dict[str, dict[str, Any]], str]] = {}
+    for identity, (data, artifact_id) in references.items():
+        reference = parse_normalized(data)
+        _check_test_identity(reference, policy)
+        if candidate["runId"] == reference["runId"]:
+            raise ValueError("Candidate and reference must come from different runs")
+        if not _canonical_uuid(artifact_id):
+            raise ValueError("Reference artifact ID must be a canonical UUID")
+        parsed_references[identity] = (
+            {result["metric"]["name"]: result for result in reference["results"]},
+            artifact_id,
+        )
 
     candidates = {result["metric"]["name"]: result for result in candidate["results"]}
-    references = {result["metric"]["name"]: result for result in reference["results"]}
     evaluations = []
     for rule in policy["spec"]["rules"]:
         name = rule["metric"]["name"]
         candidate_result = candidates.get(name)
         evaluation = _evaluate_rule(rule, candidate_result)
+        selected = None
+        if "regression" in rule:
+            reference = rule["regression"]["reference"]
+            selected = parsed_references.get((reference["baselineId"], reference["version"]))
+        reference_result = None
+        reference_artifact_id = None
+        if selected is not None:
+            reference_results, reference_artifact_id = selected
+            reference_result = reference_results.get(name)
         evaluation["regression"] = _evaluate_regression(
             rule,
             evaluation["quality"],
             candidate_result,
-            references.get(name),
+            reference_result,
             reference_artifact_id,
         )
         evaluations.append(evaluation)
@@ -139,16 +195,18 @@ def _evaluate_regression(
     candidate_quality: dict[str, Any],
     candidate: dict[str, Any] | None,
     reference: dict[str, Any] | None,
-    reference_artifact_id: str,
+    reference_artifact_id: str | None,
 ) -> dict[str, Any]:
     if "regression" not in rule:
         return _outcome("NOT_EVALUATED", "No regression comparison is configured for this rule.")
 
     statistic = rule["metric"]["statistic"]
     candidate_value = None if candidate is None else candidate["distribution"].get(statistic)
-    evidence = {"referenceArtifactId": reference_artifact_id}
+    evidence: dict[str, Any] = {}
     if candidate_value is not None:
         evidence["candidateValue"] = candidate_value
+    if reference_artifact_id is not None:
+        evidence["referenceArtifactId"] = reference_artifact_id
     if candidate_quality["status"] != "PASS":
         return {
             **_outcome("INCONCLUSIVE", "Candidate measurement quality did not pass."),
@@ -156,6 +214,11 @@ def _evaluate_regression(
         }
     if candidate is None or candidate_value is None:
         raise ValueError("Candidate quality outcome contradicts its measurement")
+    if reference_artifact_id is None:
+        return {
+            **_outcome("INCONCLUSIVE", "The approved reference artifact is unavailable."),
+            **evidence,
+        }
     if reference is None:
         return {
             **_outcome("INCONCLUSIVE", "The reference result does not contain the metric."),

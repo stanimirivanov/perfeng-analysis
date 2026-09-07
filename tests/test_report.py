@@ -1,11 +1,13 @@
+import copy
 import hashlib
+import json
 import unittest
 from typing import Any
 
 from test_comparator import REFERENCE_ARTIFACT_ID, reference_result
 from test_evaluator import RUN_ID, encode, fixture, normalized_result
 
-from perfeng_analysis import build_analysis_report
+from perfeng_analysis import ReferenceInput, build_analysis_report
 
 CANDIDATE_ARTIFACT_ID = "44444444-4444-4444-8444-444444444444"
 
@@ -85,6 +87,129 @@ class ReportTests(unittest.TestCase):
             report["evaluations"][0]["regression"]["referenceArtifactId"],
             REFERENCE_ARTIFACT_ID,
         )
+
+    def test_binds_each_policy_baseline_to_its_exact_reference(self):
+        policy = json.loads(fixture("policy/browser.json"))
+        second_rule = copy.deepcopy(policy["spec"]["rules"][0])
+        second_rule["id"] = "search-throughput"
+        second_rule["metric"] = {
+            "name": "ui.search.requests",
+            "statistic": "mean",
+            "unit": "req/s",
+        }
+        second_rule["regression"]["reference"] = {
+            "baselineId": "approved-search-throughput",
+            "version": "2.0.0",
+        }
+        policy["spec"]["rules"].append(second_rule)
+
+        candidate_document = normalized_result()
+        second_result = copy.deepcopy(candidate_document["results"][0])
+        second_result["metric"] = {
+            "name": "ui.search.requests",
+            "type": "throughput",
+            "unit": "req/s",
+            "direction": "lower-is-better",
+        }
+        second_result["distribution"]["mean"] = 80
+        candidate_document["results"].append(second_result)
+        candidate = encode(candidate_document)
+
+        first_document = reference_result()
+        first_document["measurementWindow"] = {
+            "start": "2026-09-01T13:00:00Z",
+            "end": "2026-09-01T13:01:00Z",
+        }
+        first_document["createdAt"] = "2026-09-01T13:01:01Z"
+        first = encode(first_document)
+
+        second_document = copy.deepcopy(candidate_document)
+        second_document["runId"] = "perf-20260831-130000-a1b2c3d5"
+        second_document["measurementWindow"] = {
+            "start": "2026-08-31T13:00:00Z",
+            "end": "2026-08-31T13:01:00Z",
+        }
+        second_document["createdAt"] = "2026-08-31T13:01:01Z"
+        for source in second_document["sourceArtifacts"]:
+            source["runId"] = second_document["runId"]
+            source["uri"] = f"s3://perfeng-example/runs/{second_document['runId']}/summary.json"
+        for result in second_document["results"]:
+            result["runId"] = second_document["runId"]
+        second_document["results"][1]["distribution"]["mean"] = 100
+        second = encode(second_document)
+        second_artifact_id = "77777777-7777-4777-8777-777777777777"
+
+        report = build_analysis_report(
+            candidate,
+            artifact(candidate, RUN_ID, CANDIDATE_ARTIFACT_ID),
+            encode(policy),
+            producer=producer(),
+            created_at="2026-09-02T13:02:00Z",
+            references=[
+                ReferenceInput(
+                    "approved-search-browser",
+                    "1.0.0",
+                    first,
+                    artifact(first, first_document["runId"], REFERENCE_ARTIFACT_ID),
+                ),
+                ReferenceInput(
+                    "approved-search-throughput",
+                    "2.0.0",
+                    second,
+                    artifact(second, second_document["runId"], second_artifact_id),
+                ),
+            ],
+        )
+
+        self.assertEqual(len(report["referenceArtifacts"]), 2)
+        self.assertEqual(
+            report["evaluations"][0]["regression"]["referenceArtifactId"],
+            REFERENCE_ARTIFACT_ID,
+        )
+        self.assertEqual(
+            report["evaluations"][1]["regression"]["referenceArtifactId"],
+            second_artifact_id,
+        )
+
+        partial = build_analysis_report(
+            candidate,
+            artifact(candidate, RUN_ID, CANDIDATE_ARTIFACT_ID),
+            encode(policy),
+            producer=producer(),
+            created_at="2026-09-02T13:02:00Z",
+            references=[
+                ReferenceInput(
+                    "approved-search-browser",
+                    "1.0.0",
+                    first,
+                    artifact(first, first_document["runId"], REFERENCE_ARTIFACT_ID),
+                )
+            ],
+        )
+        self.assertEqual(partial["evaluations"][0]["regression"]["status"], "FAIL")
+        self.assertEqual(partial["evaluations"][1]["regression"]["status"], "INCONCLUSIVE")
+        self.assertNotIn("referenceArtifactId", partial["evaluations"][1]["regression"])
+
+    def test_rejects_reference_not_selected_by_policy(self):
+        candidate = encode(normalized_result())
+        reference = encode(reference_result())
+
+        with self.assertRaisesRegex(ValueError, "not selected"):
+            build_analysis_report(
+                candidate,
+                artifact(candidate, RUN_ID, CANDIDATE_ARTIFACT_ID),
+                fixture("policy/browser.json"),
+                producer=producer(),
+                created_at="2026-09-02T13:02:00Z",
+                references=[
+                    ReferenceInput(
+                        "different-baseline",
+                        "1.0.0",
+                        reference,
+                        artifact(reference, reference_result()["runId"], REFERENCE_ARTIFACT_ID),
+                    )
+                ],
+            )
 
     def test_reference_bytes_and_artifact_must_be_supplied_together(self):
         candidate = encode(normalized_result())

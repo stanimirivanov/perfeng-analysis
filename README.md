@@ -126,17 +126,18 @@ failure; improvements and smaller changes pass.
 Both candidate and reference quality must pass. Missing reference evidence,
 direction mismatches, zero-valued relative references, and non-representable
 effects produce `INCONCLUSIVE`. The caller remains responsible for resolving the
-policy's pinned baseline and verifying that the supplied reference bytes and
-artifact ID are that approved immutable artifact. This function does not perform
-baseline selection or statistical significance testing.
+policy's pinned baselines and verifying that the supplied reference bytes and
+artifact IDs are those approved immutable artifacts. This function does not
+perform baseline selection or statistical significance testing.
 
 ## Build an analysis report
 
 `build_analysis_report(...)` assembles a complete `analysis/v1` document from
 the exact candidate bytes, policy bytes, artifact reference, producer identity,
-and caller-supplied creation time. An optional verified reference pair enables
-regression comparison. Without one, configured regression rules are reported as
-`INCONCLUSIVE`, not silently passed.
+and caller-supplied creation time. Policy-keyed `ReferenceInput` values bind each
+available approved baseline ID and version to its verified bytes and artifact
+claim. A missing policy baseline makes only its dependent regression rules
+`INCONCLUSIVE`; other references remain independently usable.
 
 The builder verifies artifact sizes and SHA-256 checksums against the supplied
 bytes, binds artifact run identities to their normalized documents, records the
@@ -157,10 +158,16 @@ uv run --locked perfeng-report \
   --output analysis-result.json
 ```
 
-Add `--reference reference-result.json` and `--reference-artifact
-reference-artifact.json` together to evaluate regression. All inputs are explicit
-local files. The command performs no discovery, downloads, or uploads, and it
-never overwrites an existing output.
+Supply every available policy-selected baseline with a repeatable argument:
+
+```sh
+--baseline BASELINE_ID VERSION reference-result.json reference-artifact.json
+```
+
+The earlier `--reference reference-result.json` and `--reference-artifact
+reference-artifact.json` pair remains supported for policies containing exactly
+one distinct baseline. All inputs are explicit local files. The command performs
+no discovery, downloads, or uploads, and it never overwrites an existing output.
 
 ## Container image
 

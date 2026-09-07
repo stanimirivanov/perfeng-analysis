@@ -98,6 +98,28 @@ class ReportCLITests(unittest.TestCase):
             self.assertEqual(report["evaluations"][0]["regression"]["status"], "FAIL")
             self.assertEqual(report["referenceArtifacts"][0]["id"], REFERENCE_ARTIFACT_ID)
 
+    def test_generates_report_with_policy_keyed_baseline(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            paths = write_inputs(folder)
+            output = folder / "analysis.json"
+            arguments = command(paths, output, with_reference=False)
+            arguments.extend(
+                [
+                    "--baseline",
+                    "approved-search-browser",
+                    "1.0.0",
+                    str(paths["reference"]),
+                    str(paths["reference_artifact"]),
+                ]
+            )
+
+            completed = subprocess.run(arguments, capture_output=True, text=True)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            report = parse_analysis(output.read_bytes(), paths["policy"].read_bytes())
+            self.assertEqual(report["referenceArtifacts"][0]["id"], REFERENCE_ARTIFACT_ID)
+
     def test_existing_output_is_never_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)

@@ -3,12 +3,13 @@
 from .evaluator import compare_candidate, evaluate_candidate
 from .normalizer import K6Normalizer
 from .playwright_normalizer import PlaywrightNormalizer
-from .report import build_analysis_report
+from .report import ReferenceInput, build_analysis_report
 from .validation import parse_analysis, parse_normalized, parse_policy
 
 __all__ = [
     "K6Normalizer",
     "PlaywrightNormalizer",
+    "ReferenceInput",
     "build_analysis_report",
     "compare_candidate",
     "evaluate_candidate",
