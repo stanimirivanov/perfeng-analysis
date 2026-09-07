@@ -51,14 +51,18 @@ def build_analysis_report(
         selected = (ReferenceInput(baseline_id, version, reference_data, reference_artifact),)
 
     reference_data_by_identity: dict[tuple[str, str], tuple[bytes, str]] = {}
-    reference_artifacts = []
+    reference_artifacts_by_id: dict[str, tuple[bytes, dict[str, Any]]] = {}
     for reference in selected:
         identity = (reference.baseline_id, reference.version)
         if identity in reference_data_by_identity:
             raise ValueError("Policy baseline reference is duplicated")
         validate("artifact/v1/artifact-reference.schema.json", reference.artifact)
-        reference_data_by_identity[identity] = (reference.data, reference.artifact["id"])
-        reference_artifacts.append(reference.artifact)
+        artifact_id = reference.artifact["id"]
+        existing = reference_artifacts_by_id.get(artifact_id)
+        if existing is not None and existing != (reference.data, reference.artifact):
+            raise ValueError("Reference artifact ID has conflicting evidence")
+        reference_data_by_identity[identity] = (reference.data, artifact_id)
+        reference_artifacts_by_id[artifact_id] = (reference.data, reference.artifact)
 
     evaluations = compare_candidate_references(
         candidate_data,
@@ -81,7 +85,7 @@ def build_analysis_report(
             "mode": policy["spec"]["mode"],
         },
         "candidateArtifact": candidate_artifact,
-        "referenceArtifacts": reference_artifacts,
+        "referenceArtifacts": [artifact for _, artifact in reference_artifacts_by_id.values()],
         "blocking": False,
         "evaluations": evaluations,
     }

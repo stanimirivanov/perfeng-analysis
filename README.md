@@ -137,7 +137,9 @@ the exact candidate bytes, policy bytes, artifact reference, producer identity,
 and caller-supplied creation time. Policy-keyed `ReferenceInput` values bind each
 available approved baseline ID and version to its verified bytes and artifact
 claim. A missing policy baseline makes only its dependent regression rules
-`INCONCLUSIVE`; other references remain independently usable.
+`INCONCLUSIVE`; other references remain independently usable. When multiple
+baseline identities resolve to the same immutable artifact, the report includes
+that artifact once while retaining every policy-to-artifact evaluation binding.
 
 The builder verifies artifact sizes and SHA-256 checksums against the supplied
 bytes, binds artifact run identities to their normalized documents, records the
