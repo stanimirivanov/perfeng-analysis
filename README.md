@@ -194,7 +194,7 @@ image ID, Python base digest, or uv image digest.
 ## Contracts and provenance
 
 The wheel includes twelve immutable schemas and the upstream license from
-perfeng-contracts commit 001146ef212c55c013b12b3a0b167ffc3770f3fc (bundle 0.12.0).
+perfeng-contracts commit badd9206a88a48042dda54a25c6e362088d23858 (bundle 0.13.0).
 The packaged contracts/lock.json checks their exact bytes before use. No
 runtime schema fetching occurs. Update the snapshot in a reviewed change.
 

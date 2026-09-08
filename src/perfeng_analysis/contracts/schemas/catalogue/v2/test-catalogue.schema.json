@@ -138,6 +138,25 @@
               }
             }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "url", "archiveSha256", "executableSha256"],
+          "properties": {
+            "kind": {"const": "release-archive"},
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://[^\\s@?#]+$"
+            },
+            "archiveSha256": {
+              "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/sha256"
+            },
+            "executableSha256": {
+              "$ref": "https://perfeng.dev/schemas/workload/v1/workload.schema.json#/$defs/sha256"
+            }
+          }
         }
       ]
     }
