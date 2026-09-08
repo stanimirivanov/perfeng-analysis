@@ -1,7 +1,7 @@
 # perfeng-analysis
 
-Standalone Python library and CLI for offline k6 and Playwright normalization,
-plus validation of performance policies and analysis-result claims.
+Standalone Python library and CLI for offline k6, Playwright, and kube-burner
+normalization, plus validation of performance policies and analysis-result claims.
 Use Python 3.12 and uv. No database, orchestration, or sibling repository is
 required. Ruff handles lint/formatting; ty handles type checking.
 
@@ -30,6 +30,16 @@ window assertion:
 ```sh
 uv run --locked perfeng-analysis --manifest raw-result.json \
   --summary playwright-measurements.json --artifact-id ACTUAL-DECLARED-UUID \
+  --producer-image REGISTRY/IMAGE@sha256:ACTUAL-DIGEST \
+  --output normalized-result.json
+```
+
+The kube-burner pod-latency artifact uses the same option shape as Playwright:
+
+```sh
+uv run --locked perfeng-analysis --manifest raw-result.json \
+  --summary podLatencyMeasurement-pod-startup-smoke.json \
+  --artifact-id ACTUAL-DECLARED-UUID \
   --producer-image REGISTRY/IMAGE@sha256:ACTUAL-DIGEST \
   --output normalized-result.json
 ```
@@ -64,6 +74,21 @@ measurement iteration. The adapter calculates mean, median, p90, p95, p99,
 population standard deviation, minimum, maximum, and CV. Percentiles use linear
 interpolation (Hyndman-Fan type 7). The document's run, test, workload, window,
 and creation time must agree with the raw manifest.
+
+Kube-burner input must be the `kube-burner-pod-latency-json` artifact from the
+reviewed `pod-startup-k8s` test and `pod-startup-smoke` workload. The producer
+must use release-archive provenance. The adapter requires exactly the ten
+distinct iterations and verifies every observation's run, job, metric, and
+timestamp against the manifest. It computes distributions from the individual
+observations rather than trusting kube-burner's derived quantile document.
+
+The six explicit lower-is-better millisecond metrics cover scheduling,
+initialization, containers-ready, pod-ready, containers-started, and
+ready-to-start-containers latency. They use the same mean, median, percentile,
+population standard deviation, minimum, maximum, sample-count, and CV
+definitions as Playwright. Kube-burner `--metric` values are normalized metric
+names such as `k8s.pod.ready.duration`; missing, unknown, empty, or duplicate
+selections fail.
 
 Supported mappings are explicit in src/perfeng_analysis/normalizer.py:
 HTTP duration/error rate/throughput, checkout/search duration (legacy and current

@@ -1,23 +1,11 @@
 """Normalization of semantic Playwright duration measurements."""
 
-import math
-import statistics
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
+from .distribution import summarize
 from .validation import validate
-
-
-def _percentile(values: list[float | int], probability: float) -> float | int:
-    """Return the linearly interpolated sample percentile (Hyndman-Fan type 7)."""
-    ordered = sorted(values)
-    position = (len(ordered) - 1) * probability
-    lower = math.floor(position)
-    upper = math.ceil(position)
-    if lower == upper:
-        return ordered[lower]
-    return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
 
 
 class PlaywrightNormalizer:
@@ -51,21 +39,6 @@ class PlaywrightNormalizer:
             if set(grouped[name]) != expected_iterations:
                 raise ValueError(f"Metric does not cover every measurement iteration: {name}")
             values = [grouped[name][iteration] for iteration in sorted(grouped[name])]
-            mean = statistics.fmean(values)
-            standard_deviation = statistics.pstdev(values, mu=mean)
-            distribution: dict[str, float | int] = {
-                "samples": len(values),
-                "mean": mean,
-                "median": statistics.median(values),
-                "p90": _percentile(values, 0.90),
-                "p95": _percentile(values, 0.95),
-                "p99": _percentile(values, 0.99),
-                "stddev": standard_deviation,
-                "min": min(values),
-                "max": max(values),
-            }
-            if mean > 0:
-                distribution["cv"] = standard_deviation / mean
             result = {
                 "schemaVersion": 2,
                 "runId": document["runId"],
@@ -75,7 +48,7 @@ class PlaywrightNormalizer:
                     "unit": "ms",
                     "direction": "lower-is-better",
                 },
-                "distribution": distribution,
+                "distribution": summarize(values),
             }
             validate("result/v2/test-result.schema.json", result)
             results.append(result)

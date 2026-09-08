@@ -9,6 +9,7 @@ from pathlib import Path
 from jsonschema.exceptions import ValidationError
 
 from . import __version__
+from .kube_burner_normalizer import KubeBurnerNormalizer, check_kube_burner_manifest
 from .normalizer import K6Normalizer
 from .playwright_normalizer import PlaywrightNormalizer, check_playwright_manifest
 from .validation import check_manifest, parse_json, validate
@@ -62,6 +63,15 @@ def main() -> int:
                 raise ValueError("Expected a Playwright measurements object")
             check_playwright_manifest(source, manifest)
             results = PlaywrightNormalizer().normalize(source, args.metric)
+        elif artifact["format"] == "kube-burner-pod-latency-json":
+            if manifest["producer"]["name"] != "kube-burner":
+                raise ValueError("Expected kube-burner raw producer")
+            if args.layout is not None or args.summary_covers_window:
+                raise ValueError("Kube-burner observations define their own layout and timestamps")
+            if not isinstance(source, list):
+                raise ValueError("Expected a kube-burner observation array")
+            check_kube_burner_manifest(source, manifest)
+            results = KubeBurnerNormalizer().normalize(source, manifest["runId"], args.metric)
         else:
             raise ValueError("Unsupported raw artifact format")
         now = datetime.now(UTC)
