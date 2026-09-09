@@ -8,6 +8,7 @@ from pathlib import Path
 from jsonschema.exceptions import ValidationError
 
 from . import __version__
+from ._output import write_text_exclusive
 from .report import ReferenceInput, build_analysis_report
 from .validation import parse_object
 
@@ -64,8 +65,7 @@ def main() -> int:
             references=references,
         )
         encoded = json.dumps(report, indent=2, allow_nan=False) + "\n"
-        with args.output.open("x", encoding="utf-8", newline="\n") as output:
-            output.write(encoded)
+        write_text_exclusive(args.output, encoded)
     except (OSError, ValueError, ValidationError) as error:
         parser.exit(1, f"Analysis failed: {error}\n")
     return 0

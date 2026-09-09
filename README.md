@@ -52,8 +52,12 @@ The manifest must satisfy raw-result/v1 or raw-result/v2, contain the selected a
 and have valid run identities, unique artifact IDs/URIs, and ordered timestamps.
 Summary bytes must match its checksum and size. Only the artifact actually used
 appears in sourceArtifacts. Output satisfies normalized-result/v1 with result/v2
-records. It is exclusively created; retries never overwrite prior results.
-No network requests or uploads are performed.
+records. It is atomically and exclusively created: the final path appears only
+after complete bytes have been flushed, and retries never overwrite prior
+results. The output directory must support same-directory hard links, as Linux
+`emptyDir` volumes and NTFS do. This permits a same-UID publisher process to use
+the final path as a completion boundary. No network requests or uploads are
+performed.
 
 --summary-covers-window is a caller assertion that this aggregate summarizes
 exactly the manifest's measurement interval. A summary cannot prove that fact
@@ -174,7 +178,7 @@ object. Retrieving or publishing bytes and attesting the producer image remain
 the caller's responsibilities.
 
 The separate CLI keeps normalization compatibility intact and writes its result
-with exclusive creation:
+with the same atomic, exclusive creation contract:
 
 ```sh
 uv run --locked perfeng-report \

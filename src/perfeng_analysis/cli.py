@@ -9,6 +9,7 @@ from pathlib import Path
 from jsonschema.exceptions import ValidationError
 
 from . import __version__
+from ._output import write_text_exclusive
 from .kube_burner_normalizer import KubeBurnerNormalizer, check_kube_burner_manifest
 from .normalizer import K6Normalizer
 from .playwright_normalizer import PlaywrightNormalizer, check_playwright_manifest
@@ -96,8 +97,7 @@ def main() -> int:
         }
         validate("normalized-result/v1/normalized-result.schema.json", result)
         encoded = json.dumps(result, indent=2, allow_nan=False) + "\n"
-        with args.output.open("x", encoding="utf-8", newline="\n") as output:
-            output.write(encoded)
+        write_text_exclusive(args.output, encoded)
     except (OSError, ValueError, ValidationError) as error:
         parser.exit(1, f"Normalization failed: {error}\n")
     return 0
