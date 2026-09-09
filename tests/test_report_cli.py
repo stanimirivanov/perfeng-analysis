@@ -79,7 +79,7 @@ class ReportCLITests(unittest.TestCase):
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
             report = parse_analysis(output.read_bytes(), paths["policy"].read_bytes())
-            self.assertEqual(report["producer"]["version"], "0.8.0")
+            self.assertEqual(report["producer"]["version"], "0.8.1")
             self.assertEqual(report["producer"]["image"], PRODUCER_IMAGE)
             self.assertEqual(report["evaluations"][0]["regression"]["status"], "INCONCLUSIVE")
 
