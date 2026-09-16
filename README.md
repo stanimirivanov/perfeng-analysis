@@ -1,11 +1,38 @@
 # perfeng-analysis
 
+## TL;DR
+
+- Normalizes offline k6, Playwright and kube-burner evidence into explicit
+  versioned contracts.
+- Evaluates quality and SLO rules, compares approved references and builds
+  self-contained analysis reports without retrieving or publishing artifacts.
+- Preserves units, sample populations, missingness and provenance; absent data
+  is never treated as zero.
+- Runs deterministically without a database, sibling checkout or network access.
+- Uses Python 3.12, uv, Ruff and ty. Run `make validate` before submitting a
+  change.
+
 Standalone Python library and CLI for offline k6, Playwright, and kube-burner
 normalization, plus validation of performance policies and analysis-result claims.
 Use Python 3.12 and uv. No database, orchestration, or sibling repository is
 required. Ruff handles lint/formatting; ty handles type checking.
 
 ## Development
+
+Contributor workflow and repository policy are defined in
+[CONTRIBUTING.md](CONTRIBUTING.md). Analysis-specific design and verification
+rules are in the
+[engineering standards](docs/development/engineering-standards.md), and durable
+decisions are recorded in [ADRs](docs/decisions/README.md).
+
+The portable entry point runs formatting checks, linting, type checking, source
+tests and a distribution build:
+
+```sh
+make validate
+```
+
+The equivalent individual commands are:
 
 ```sh
 uv sync --locked
