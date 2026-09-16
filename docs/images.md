@@ -1,5 +1,14 @@
 # Analysis image publication
 
+## TL;DR
+
+- Build and verify the Linux AMD64 image locally before publication.
+- Publish only from the manual workflow on `main` and promote only its verified
+  immutable GHCR digest.
+- The image runs as a numeric non-root user and needs no network at runtime.
+- Updating a base-image pin requires a reviewed dependency change and rebuild.
+- Publication does not change package visibility, sign an image or deploy it.
+
 The runtime image contains the locked `perfeng-analysis` installation and both
 offline commands. It does not contain the repository, tests, development tools,
 credentials, or result data.
