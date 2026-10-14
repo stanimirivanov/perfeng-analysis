@@ -37,7 +37,7 @@ jobs:
         run: |
           docker build --platform linux/amd64 -t perfeng-analysis:ci .
           uv run --locked --offline python scripts/image.py verify perfeng-analysis:ci
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: perfeng-analysis-wheel
           path: dist/*
