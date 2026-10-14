@@ -46,6 +46,11 @@ validation never substitutes for scientific-quality checks.
 - Changes affecting packaging or runtime resources also run installed-wheel and
   image checks as applicable.
 
+GitHub Actions MAY use release tags or commit SHA pins; the harness does not
+require semantic-major tags. Retain readable version comments alongside SHA
+pins where practical and review every action update. This does not relax
+immutable product image digests or contract checksums.
+
 Dependabot may propose grouped GitHub Actions updates. Python updates remain a
 manual, lockfile-aware workflow until the hosted updater supports the pinned uv
 toolchain reliably. Every dependency change remains subject to normal review;

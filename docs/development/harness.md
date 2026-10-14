@@ -43,7 +43,7 @@ check. The constrained-environment protocol in CONTRIBUTING always applies.
 | `make bootstrap` | Locked Python and development dependencies are available. |
 | `make doctor` | The effective Git, uv, Python and Make toolchain is visible. |
 | `make fmt` | Repository-owned Python is formatted; inspect the resulting diff. |
-| `make docs-check` | Local links, TL;DR policy, ADR bookkeeping, templates and workflow action references satisfy mechanical policy. |
+| `make docs-check` | Local links, TL;DR policy, ADR bookkeeping and templates satisfy mechanical policy. |
 | `make check` | Formatting, documentation policy, lock state, lint and static types pass. |
 | `make test` | The deterministic source test suite passes. |
 | `make build` | Source and wheel distributions build from locked inputs. |
@@ -79,9 +79,10 @@ verification proves the portable inner loop. Supply-chain feedback is separate
 because it depends on current external vulnerability data and has a different
 failure mode.
 
-GitHub Action references use semantic major tags. Product image digests and
-contract checksums remain immutable content identities and are not replaced by
-floating tags.
+The harness does not constrain GitHub Action reference styles. Tags and commit
+SHA pins are reviewed through the normal dependency workflow. Product image
+digests and contract checksums remain immutable content identities and are not
+replaced by floating tags.
 
 ## Maintaining the harness
 

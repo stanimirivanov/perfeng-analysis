@@ -157,21 +157,15 @@ Context.
     def test_accepts_consistent_repository(self) -> None:
         self.assertEqual([], check_repository(self.root))
 
-    def test_reports_links_tldr_and_action_hashes(self) -> None:
+    def test_reports_links_and_tldr(self) -> None:
         self._write(
             "docs/migration-guide.md",
             "# Migration\n\n## Steps\n\n[Missing](absent.md)\n",
         )
-        self._write(
-            ".github/workflows/validate.yml",
-            "name: Validate\njobs:\n  validate:\n    steps:\n      - uses: actions/checkout@abcdef\n",
-        )
-
         rules = [violation.rule for violation in check_repository(self.root)]
 
         self.assertIn("docs.internal-link", rules)
         self.assertIn("docs.tldr", rules)
-        self.assertIn("workflow.action-version", rules)
 
     def test_reports_adr_and_template_drift(self) -> None:
         issue = self.root / ".github/ISSUE_TEMPLATE/work-item.md"
@@ -190,27 +184,26 @@ Context.
         self.assertIn("adr.index", rules)
         self.assertIn("template.issue", rules)
 
-    def test_action_policy_handles_quotes_blocks_and_composites(self) -> None:
+    def test_accepts_workflow_and_composite_action_reference_styles(self) -> None:
         self._write(
             ".github/workflows/validate.yml",
             "steps:\n"
             '  - uses: "actions/checkout@v7" # readable major\n'
+            "  - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0\n"
+            "  - uses: owner/action@v1.2.3\n"
+            "  - uses: owner/action@main\n"
+            "  - uses: ./local-action\n"
+            "  - uses: docker://example.invalid/action@sha256:" + "a" * 64 + "\n"
             "  - run: |\n"
             "      echo 'uses: owner/not-an-action@abcdef'\n",
         )
         self._write(
             ".github/actions/example/action.yml",
-            "runs:\n  using: composite\n  steps:\n    - uses: owner/action@abcdef\n",
+            "runs:\n  using: composite\n  steps:\n"
+            "    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884\n",
         )
 
-        action_violations = [
-            violation
-            for violation in check_repository(self.root)
-            if violation.rule == "workflow.action-version"
-        ]
-
-        self.assertEqual(1, len(action_violations))
-        self.assertEqual(".github/actions/example/action.yml", action_violations[0].path)
+        self.assertEqual([], check_repository(self.root))
 
 
 if __name__ == "__main__":
