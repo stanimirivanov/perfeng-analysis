@@ -81,4 +81,6 @@ How will assumptions and consequences be verified?
 
 ## Index
 
-No ADRs have been accepted yet.
+| ADR | Status | Title |
+|:--|:--|:--|
+| [0001](0001-adopt-contained-kubernetes-analysis.md) | Proposed | Adopt the contained kube-burner recipe without merging cohorts |
