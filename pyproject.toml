@@ -12,11 +12,11 @@ perfeng-analysis = "perfeng_analysis.cli:main"
 perfeng-report = "perfeng_analysis.report_cli:main"
 
 [build-system]
-requires = ["hatchling>=1.27,<2"]
+requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["ruff>=0.16.4,<0.17", "ty>=0.0.1,<1", "types-jsonschema"]
+dev = ["hatchling==1.32.4", "ruff>=0.16.4,<0.17", "ty>=0.0.1,<1", "types-jsonschema"]
 
 [tool.ruff]
 target-version = "py312"

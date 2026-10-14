@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "kind": "RawResult",
+  "contractsVersion": "0.22.0",
+  "runId": "perf-20260908-120000-a1b2c3d4",
+  "testId": "pod-startup-k8s",
+  "workload": {
+    "id": "pod-startup-contained",
+    "version": "1.0.0",
+    "sha256": "1dd90543d8cbd79014fbb522890463c0ee0c324d0ecff92973da58423500a29d"
+  },
+  "producer": {
+    "name": "kube-burner",
+    "version": "2.8.5",
+    "artifact": {
+      "kind": "oci-image",
+      "image": "example.invalid/perfeng-kube-burner@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "measurementWindow": {
+    "start": "2026-09-08T12:00:00Z",
+    "end": "2026-09-08T12:01:00Z"
+  },
+  "createdAt": "2026-09-08T12:01:01Z",
+  "artifacts": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "runId": "perf-20260908-120000-a1b2c3d4",
+      "kind": "raw",
+      "uri": "s3://perfeng-fixtures/runs/perf-20260908-120000-a1b2c3d4/raw/pod-latencies.json",
+      "sha256": "5a11f212dcfb23f75204a2352b6c104eacf3d105216c62e279f085fb01ca4f1d",
+      "sizeBytes": 4106,
+      "mediaType": "application/json",
+      "format": "kube-burner-pod-latency-json"
+    }
+  ]
+}

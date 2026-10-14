@@ -19,6 +19,11 @@ METRICS = {
     "k8s.pod.ready_to_start_containers.duration": "readyToStartContainersLatency",
 }
 EXPECTED_ITERATIONS = set(range(10))
+CONTAINED_WORKLOAD = {
+    "id": "pod-startup-contained",
+    "version": "1.0.0",
+    "sha256": "1dd90543d8cbd79014fbb522890463c0ee0c324d0ecff92973da58423500a29d",
+}
 
 
 def latency(value: Any) -> float | int:
@@ -31,7 +36,11 @@ def latency(value: Any) -> float | int:
 
 
 class KubeBurnerNormalizer:
-    """Normalize a complete pod-startup iteration series."""
+    """Normalize ten complete observations, without attesting external provenance.
+
+    File adapters must validate the raw manifest, verify the selected bytes and
+    call ``check_kube_burner_manifest`` before using this statistical boundary.
+    """
 
     def normalize(
         self,
@@ -39,6 +48,11 @@ class KubeBurnerNormalizer:
         run_id: str,
         metric_names: list[str] | None = None,
     ) -> list[dict[str, Any]]:
+        """Return selected lower-is-better millisecond distributions.
+
+        Reject incomplete, duplicated or misattributed iterations, unsupported
+        selections and non-finite/negative latency values. Input is not mutated.
+        """
         observations = self._observations(document, run_id)
         names = list(METRICS) if metric_names is None else metric_names
         if not names or len(names) != len(set(names)) or any(name not in METRICS for name in names):
@@ -90,12 +104,25 @@ class KubeBurnerNormalizer:
 
 
 def check_kube_burner_manifest(document: list[Any], manifest: dict[str, Any]) -> None:
-    """Bind every observation timestamp and identity to the raw manifest."""
+    """Bind observations to a validated raw manifest and a supported execution recipe.
+
+    Archive captures retain their host workload. OCI captures require the exact
+    contained workload from perfeng-k8s a0e2b670bea91af182aaff78c925f4a3c6d1d861.
+    This check neither authenticates the runner image nor establishes environment
+    qualification or baseline eligibility; those are the caller's responsibilities.
+    """
+    producer = manifest["producer"]
+    provenance = producer.get("artifact", {}).get("kind")
+    workload = manifest["workload"]
+    supported = (provenance == "release-archive" and workload["id"] == "pod-startup-smoke") or (
+        provenance == "oci-image"
+        and producer["version"] == "2.8.5"
+        and workload == CONTAINED_WORKLOAD
+    )
     if (
         manifest["testId"] != "pod-startup-k8s"
-        or manifest["workload"]["id"] != "pod-startup-smoke"
-        or manifest["producer"]["name"] != "kube-burner"
-        or manifest["producer"].get("artifact", {}).get("kind") != "release-archive"
+        or producer["name"] != "kube-burner"
+        or not supported
     ):
         raise ValueError("Raw manifest does not describe the reviewed kube-burner workload")
     start = datetime.fromisoformat(manifest["measurementWindow"]["start"])
@@ -107,5 +134,7 @@ def check_kube_burner_manifest(document: list[Any], manifest: dict[str, Any]) ->
             observed = datetime.fromisoformat(value["timestamp"])
         except ValueError as error:
             raise ValueError("Kube-burner observation timestamp is invalid") from error
+        if observed.tzinfo is None:
+            raise ValueError("Kube-burner observation timestamp requires a timezone")
         if observed < start or observed >= end:
             raise ValueError("Kube-burner observation is outside the measurement window")

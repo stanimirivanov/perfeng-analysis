@@ -38,6 +38,7 @@ def compare_candidate(
         reference = parse_normalized(reference_data)
         _check_test_identity(candidate, policy)
         _check_test_identity(reference, policy)
+        _check_kubernetes_workload(candidate, reference)
         if candidate["runId"] == reference["runId"]:
             raise ValueError("Candidate and reference must come from different runs")
         if not _canonical_uuid(reference_artifact_id):
@@ -75,6 +76,7 @@ def compare_candidate_references(
     for identity, (data, artifact_id) in references.items():
         reference = parse_normalized(data)
         _check_test_identity(reference, policy)
+        _check_kubernetes_workload(candidate, reference)
         if candidate["runId"] == reference["runId"]:
             raise ValueError("Candidate and reference must come from different runs")
         if not _canonical_uuid(artifact_id):
@@ -282,6 +284,11 @@ def _evaluate_regression(
 def _check_test_identity(normalized: dict[str, Any], policy: dict[str, Any]) -> None:
     if normalized["testId"] != policy["metadata"]["name"]:
         raise ValueError("Normalized test ID does not match policy")
+
+
+def _check_kubernetes_workload(candidate: dict[str, Any], reference: dict[str, Any]) -> None:
+    if candidate["testId"] == "pod-startup-k8s" and candidate["workload"] != reference["workload"]:
+        raise ValueError("Kubernetes candidate and reference workload identities differ")
 
 
 def _canonical_uuid(value: str) -> bool:

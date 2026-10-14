@@ -23,12 +23,16 @@ Contributor workflow and repository policy are defined in
 [CONTRIBUTING.md](CONTRIBUTING.md). Analysis-specific design and verification
 rules are in the
 [engineering standards](docs/development/engineering-standards.md), and durable
-decisions are recorded in [ADRs](docs/decisions/README.md).
+decisions are recorded in [ADRs](docs/decisions/README.md). Use the
+[documentation map](docs/README.md) to select task-specific guidance and the
+[harness guide](docs/development/harness.md) for setup and verification tiers.
 
-The portable entry point runs formatting checks, linting, type checking, source
-tests and a distribution build:
+Bootstrap locked dependencies once, use the offline verification loop during
+development, and run the complete portable acceptance suite before handoff:
 
 ```sh
+make bootstrap
+make verify
 make validate
 ```
 
@@ -107,8 +111,13 @@ interpolation (Hyndman-Fan type 7). The document's run, test, workload, window,
 and creation time must agree with the raw manifest.
 
 Kube-burner input must be the `kube-burner-pod-latency-json` artifact from the
-reviewed `pod-startup-k8s` test and `pod-startup-smoke` workload. The producer
-must use release-archive provenance. The adapter requires exactly the ten
+reviewed `pod-startup-k8s` test. Historical `pod-startup-smoke` captures use
+release-archive provenance. Contained OCI captures require kube-burner 2.8.5 and
+the exact reviewed `pod-startup-contained/1.0.0` workload hash; see
+[Kubernetes analysis](docs/kubernetes-analysis.md) for supported identities,
+decision fixtures and the separate caller-owned qualification/eligibility gates.
+Kubernetes candidate and reference workload ID/version/hash must match exactly.
+The adapter requires exactly the ten
 distinct iterations and verifies every observation's run, job, metric, and
 timestamp against the manifest. It computes distributions from the individual
 observations rather than trusting kube-burner's derived quantile document.

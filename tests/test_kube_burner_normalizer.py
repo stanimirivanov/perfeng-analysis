@@ -125,7 +125,7 @@ class KubeBurnerNormalizerTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 KubeBurnerNormalizer().normalize(document, RUN_ID)
 
-    def test_manifest_binding_requires_release_provenance_and_windowed_timestamps(self) -> None:
+    def test_manifest_binding_requires_supported_provenance_and_windowed_timestamps(self) -> None:
         raw = json.dumps(observations()).encode()
         manifest, _ = raw_manifest(raw)
         check_kube_burner_manifest(observations(), manifest)
