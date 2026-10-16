@@ -28,7 +28,9 @@ def _imports(tree: ast.AST) -> list[tuple[int, str, bool]]:
                 (
                     node.lineno,
                     f"{module}.{alias.name}".strip("."),
-                    node.level > 0 or module.startswith("perfeng_analysis."),
+                    node.level > 0
+                    or module == "perfeng_analysis"
+                    or module.startswith("perfeng_analysis."),
                 )
                 for alias in node.names
             )
@@ -60,6 +62,10 @@ class ArchitectureTests(unittest.TestCase):
     def test_rejects_adapter_and_network_imports_without_blocking_url_parsing(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package = Path(temporary)
+            (package / "absolute_import.py").write_text(
+                "from perfeng_analysis import cli\n",
+                encoding="utf-8",
+            )
             (package / "distribution.py").write_text(
                 "from ._output import write_text_exclusive\n",
                 encoding="utf-8",
@@ -79,6 +85,7 @@ class ArchitectureTests(unittest.TestCase):
             self.assertEqual(
                 import_violations(package),
                 [
+                    "absolute_import.py:1: core imports adapter perfeng_analysis.cli",
                     "distribution.py:1: core imports adapter _output.write_text_exclusive",
                     "future_analysis.py:1: core imports adapter cli.main",
                     "report.py:1: runtime import urllib.request",
