@@ -57,6 +57,13 @@ changes additionally run the installed-wheel command from CONTRIBUTING. Image
 or entry-point changes additionally build and verify the image as documented in
 [the image guide](../images.md).
 
+The source test suite includes a direct-import boundary check: modules outside
+the named CLI/output adapters cannot import those adapters, and runtime modules
+cannot directly import the listed process or network client modules. New
+modules follow the core rule by default. The check permits local URL parsing
+and packaged-resource reads. It is a structural early warning, not a sandbox
+or a replacement for behavioral tests of offline operation.
+
 ## Feedback design
 
 A recurring review finding SHOULD become one of:
