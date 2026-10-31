@@ -48,7 +48,7 @@ check. The constrained-environment protocol in CONTRIBUTING always applies.
 | `make test` | The deterministic source test suite passes. |
 | `make build` | Source and wheel distributions build from locked inputs. |
 | `make verify` | Checks, tests and distribution build pass without network after bootstrap. |
-| `make vuln` | The locked dependency graph is checked against current vulnerability data for supported Linux and Windows targets. |
+| `make vuln` | The locked dependency graph is checked against current vulnerability data for supported Linux targets. |
 | `make supply-chain` | The repository's automated dependency-risk checks pass. |
 | `make validate` | The complete portable acceptance aggregate passes. |
 
@@ -81,8 +81,7 @@ the violated rule and the likely correction.
 ## CI mapping
 
 The existing Linux `validate` job remains the stable required context and keeps
-the installed-wheel and image probes it historically covered. Windows
-verification proves the portable inner loop. Supply-chain feedback is separate
+the installed-wheel and image probes it historically covered. Supply-chain feedback is separate
 because it depends on current external vulnerability data and has a different
 failure mode.
 

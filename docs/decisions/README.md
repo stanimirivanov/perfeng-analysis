@@ -84,3 +84,5 @@ How will assumptions and consequences be verified?
 | ADR | Status | Title |
 |:--|:--|:--|
 | [0001](0001-adopt-contained-kubernetes-analysis.md) | Proposed | Adopt the contained kube-burner recipe without merging cohorts |
+
+| [0002](0002-support-linux-hosts.md) | Proposed | Support Linux development and native browser hosts; retire active Windows support. |

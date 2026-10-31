@@ -50,7 +50,6 @@ verify: check test build
 
 vuln:
 	uv audit --preview-features audit-command --locked --python-platform linux
-	uv audit --preview-features audit-command --locked --python-platform windows
 
 supply-chain: vuln
 

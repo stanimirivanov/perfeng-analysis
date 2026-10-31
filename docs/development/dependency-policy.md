@@ -60,7 +60,7 @@ preserved.
 ## Vulnerabilities and licenses
 
 `uv audit --locked` checks the resolved graph against current vulnerability
-data. The Make target audits the supported Linux and Windows resolution targets
+data. The Make target audits the supported Linux resolution targets
 explicitly. A finding is assessed for reachability, affected version, fix
 availability and operational exposure; exceptions require an owner, rationale
 and review trigger rather than a silent ignore.
