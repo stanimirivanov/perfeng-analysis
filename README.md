@@ -263,6 +263,25 @@ perfeng-contracts commit badd9206a88a48042dda54a25c6e362088d23858 (bundle 0.13.0
 The packaged contracts/lock.json checks their exact bytes before use. No
 runtime schema fetching occurs. Update the snapshot in a reviewed change.
 
+Run the optional contract shadow with the exact asset tags from
+[the distribution lock](contracts-distribution.lock.json). Stage the
+materializer archive and Sigstore bundle in `$assets/tool` and the signed
+historical release files in `$assets/history` before running the offline gate.
+Use a reviewed, preprovisioned environment checkout for the bootstrap verifier
+and a separately checksum-pinned GitHub CLI. The
+[bootstrap guide](https://github.com/stanimirivanov/perfeng-environment/blob/main/docs/contract-distribution-tools.md)
+describes these trust inputs.
+
+```sh
+make contracts-shadow CONTRACTS_SHADOW_ASSETS="$assets" \
+  CONTRACTS_BOOTSTRAP="$bootstrap" CONTRACTS_VERIFIER="$verifier"
+```
+
+The gate emits a JSON receipt after signature checks, temporary projection,
+exact byte comparison and validation of known valid and invalid fixtures
+through both schema trees. Ordinary analysis and wheel builds continue using
+the packaged snapshot.
+
 Adapted from performance-platform commit
 57c1b5074898d4d86476e8b4f99c19eff3a77018:
 platform/src/perfeng/normalizer/k6_normalizer.py,

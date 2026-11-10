@@ -13,6 +13,7 @@ help:
 	@echo "  make test       Run the unit-test suite"
 	@echo "  make build      Build source and wheel distributions"
 	@echo "  make verify     Run the offline development feedback loop"
+	@echo "  make contracts-shadow  Compare the packaged contracts to the signed release offline"
 	@echo "  make vuln       Audit locked dependencies for supported platforms"
 	@echo "  make supply-chain  Run automated dependency-risk checks"
 	@echo "  make validate   Run all portable non-image acceptance checks"
@@ -54,3 +55,8 @@ vuln:
 supply-chain: vuln
 
 validate: verify supply-chain
+
+.PHONY: contracts-shadow
+contracts-shadow:
+	@$(UV_RUN) python -m scripts.contracts_shadow --assets "$(CONTRACTS_SHADOW_ASSETS)" \
+	  --bootstrap "$(CONTRACTS_BOOTSTRAP)" --verifier "$(CONTRACTS_VERIFIER)"
