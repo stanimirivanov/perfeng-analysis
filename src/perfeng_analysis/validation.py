@@ -48,11 +48,12 @@ def no_network(uri: str) -> Never:
     raise NoSuchResource(ref=uri)
 
 
-def load_validators() -> dict[str, Draft202012Validator]:
+def load_validators(contracts: Path = CONTRACTS) -> dict[str, Draft202012Validator]:
+    """Load a schema tree against the packaged checksum lock."""
     lock = parse_json((CONTRACTS / "lock.json").read_bytes())
     schemas = {}
     for path, expected in lock["files"].items():
-        data = (CONTRACTS / path).read_bytes()
+        data = (contracts / path).read_bytes()
         if hashlib.sha256(data).hexdigest() != expected:
             raise ValueError(f"Vendored checksum mismatch: {path}")
         if path.endswith(".json"):
