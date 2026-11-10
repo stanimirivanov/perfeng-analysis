@@ -7,6 +7,8 @@ import re
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -57,8 +59,9 @@ def run(command: list[str], cwd: Path) -> str:
     ).stdout
 
 
-def shadow(assets: Path, bootstrap: Path, verifier: Path) -> dict[str, Any]:
-    """Restore the pinned tool and verify a fresh, temporary contract projection."""
+@contextmanager
+def signed_projection(assets: Path, bootstrap: Path, verifier: Path) -> Iterator[Path]:
+    """Yield a fresh projection from the pinned signed distribution."""
     lock = parse_json(LOCK.read_bytes())
     snapshot_bytes = (CONTRACTS / "lock.json").read_bytes()
     snapshot = parse_json(snapshot_bytes)
@@ -141,6 +144,13 @@ def shadow(assets: Path, bootstrap: Path, verifier: Path) -> dict[str, Any]:
         projection = store / pointer[:-1].decode("ascii")
         if output != f"{projection}\n":
             raise ValueError("Projection output disagrees with its current pointer")
+        yield projection
+
+
+def shadow(assets: Path, bootstrap: Path, verifier: Path) -> dict[str, Any]:
+    """Compare the signed projection and packaged runtime snapshot."""
+    lock = parse_json(LOCK.read_bytes())
+    with signed_projection(assets, bootstrap, verifier) as projection:
         count = check_parity(projection)
 
     return {
@@ -149,7 +159,7 @@ def shadow(assets: Path, bootstrap: Path, verifier: Path) -> dict[str, Any]:
         "toolArchiveSha256": lock["tool"]["archiveSha256"],
         "historyRelease": lock["historyRelease"],
         "manifestSha256": lock["publisher"]["manifestSha256"],
-        "sourceRevision": revision,
+        "sourceRevision": lock["sourceRevision"],
         "bundleVersion": lock["bundleVersion"],
         "snapshotLockSha256": lock["snapshotLockSha256"],
         "matchedFiles": count,
