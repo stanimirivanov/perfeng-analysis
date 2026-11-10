@@ -261,7 +261,7 @@ image ID, Python base digest, or uv image digest.
 The wheel includes twelve immutable schemas and the upstream license from
 perfeng-contracts commit badd9206a88a48042dda54a25c6e362088d23858 (bundle 0.13.0).
 The packaged contracts/lock.json checks their exact bytes before use. No
-runtime schema fetching occurs. Update the snapshot in a reviewed change.
+runtime schema fetching occurs. Prepare updates from the [signed distribution](docs/development/contract-distribution.md).
 
 Run the optional contract shadow with the exact asset tags from
 [the distribution lock](contracts-distribution.lock.json). Stage the

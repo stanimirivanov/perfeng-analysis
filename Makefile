@@ -60,3 +60,13 @@ validate: verify supply-chain
 contracts-shadow:
 	@$(UV_RUN) python -m scripts.contracts_shadow --assets "$(CONTRACTS_SHADOW_ASSETS)" \
 	  --bootstrap "$(CONTRACTS_BOOTSTRAP)" --verifier "$(CONTRACTS_VERIFIER)"
+
+.PHONY: contracts-update-check contracts-package-check
+contracts-update-check:
+	$(UV_RUN) python -m unittest discover -s tests -p test_contract_distribution_install.py -v
+	@$(UV_RUN) python -m scripts.contracts_update --assets "$(CONTRACTS_SHADOW_ASSETS)" \
+	  --bootstrap "$(CONTRACTS_BOOTSTRAP)" --verifier "$(CONTRACTS_VERIFIER)"
+
+contracts-package-check:
+	@$(UV_RUN) python -m scripts.contracts_package --current "$(CONTRACTS_CURRENT_WHEEL)" \
+	  --rollback "$(CONTRACTS_ROLLBACK_WHEEL)" --rollback-sha256 "$(CONTRACTS_ROLLBACK_SHA256)"
