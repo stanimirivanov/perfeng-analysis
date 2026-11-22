@@ -19,8 +19,8 @@ required. Ruff handles lint/formatting; ty handles type checking.
 
 ## Development
 
-Contributor workflow and repository policy are defined in
-[CONTRIBUTING.md](CONTRIBUTING.md). Analysis-specific design and verification
+See [AGENTS.md](AGENTS.md) for the agent workflow and
+[CONTRIBUTING.md](CONTRIBUTING.md) for repository requirements. Analysis-specific design and verification
 rules are in the
 [engineering standards](docs/development/engineering-standards.md), and durable
 decisions are recorded in [ADRs](docs/decisions/README.md). Use the

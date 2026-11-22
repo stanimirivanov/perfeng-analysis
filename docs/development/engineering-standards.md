@@ -108,7 +108,6 @@ or speculative plugin systems.
 - Use small fixtures with independently understandable expected statistics.
 - Test exact boundary values, direction changes, missingness, unstable evidence,
   zero references, unit mismatch, unsupported layouts and contradictory claims.
-- Defect fixes SHOULD begin with a failing regression test.
 - Tests MUST be deterministic, isolated and independent of network, locale,
   filesystem ordering and wall clock unless those are the subject.
 - Source tests prove development behavior; installed-wheel tests prove packaging;
