@@ -16,7 +16,7 @@
 
 | Task or changed area | Read before changing it | Verify or consult as needed |
 |:--|:--|:--|
-| Contributor workflow, issue scope or completion report | [CONTRIBUTING.md](../CONTRIBUTING.md) | [Agent entry point](../AGENTS.md) |
+| Contribution requirements or verification | [CONTRIBUTING.md](../CONTRIBUTING.md) | [Agent entry point](../AGENTS.md) |
 | Normalization, evaluation, comparison or reporting | [Analysis engineering standards](development/engineering-standards.md), relevant [README](../README.md) section | Contract fixtures and focused tests |
 | Contained Kubernetes OCI analysis and decision fixtures | [Kubernetes analysis](kubernetes-analysis.md), [ADR 0001](decisions/0001-adopt-contained-kubernetes-analysis.md) | Source and installed-wheel suites; caller-owned qualification and baseline eligibility |
 | CLI, output publication or package resources | [Analysis engineering standards](development/engineering-standards.md) | Installed-wheel and image checks documented in the [harness guide](development/harness.md) |

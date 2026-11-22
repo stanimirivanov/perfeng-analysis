@@ -1,31 +1,23 @@
-# Repository working agreement
+# Repository agent guide
 
-## TL;DR
+## Agent skills
 
-- Read `CONTRIBUTING.md`; it is the canonical workflow policy.
-- Preserve statistical meaning, units, provenance and missing-data semantics.
-- Keep normalization, evaluation, report assembly and orchestration concerns
-  distinct.
-- Run the exact checks and report their results honestly.
+Use `mattpocock/skills` as the primary workflow for planning, ticketing,
+implementation, TDD, review, and pull requests. The skills take precedence where
+contributor guidance covers the same steps. Follow the repository's technical
+requirements, CI gates, and authorization boundaries.
 
-This file is the concise, tool-facing entry point for contributors and coding
-agents. [CONTRIBUTING.md](CONTRIBUTING.md) is the canonical workflow policy.
-Normative terms such as MUST, SHOULD and MAY have the meanings defined there.
+### Issue tracker
 
-## Before changing anything
+Use GitHub Issues in `stanimirivanov/perfeng-analysis`. See [issue tracker configuration](docs/agents/issue-tracker.md).
 
-1. You MUST read [CONTRIBUTING.md](CONTRIBUTING.md), especially its ambiguity,
-   issue-timing, verification and external-side-effect rules.
-2. You MUST inspect the branch and working tree and preserve pre-existing work.
-3. You MUST use the [documentation map](docs/README.md) to select the relevant
-   engineering, contract, packaging and decision sources. Do not bulk-read
-   unrelated guides or ADRs.
-4. You MUST use repository-local checks and MUST NOT claim an unavailable or
-   unexecuted check passed.
+### Triage labels
 
-If implementation, fixtures, bundled contracts and documented statistical
-meaning disagree, you MUST NOT silently pick one. Correct an obvious local
-defect or propose a superseding ADR. Ordinary ambiguity follows CONTRIBUTING.
+Use the default Matt Pocock label mapping. See [triage labels](docs/agents/triage-labels.md).
+
+### Domain docs
+
+Single context with a root glossary and ADRs in `docs/decisions/`. See [domain docs](docs/agents/domain.md).
 
 ## Repository responsibility
 
@@ -41,17 +33,6 @@ baseline approval/selection, orchestration or shared contract definitions.
 - Storage, scheduling and baseline lifecycle remain in their owning components.
 - Output publication is atomic and exclusive; retries MUST NOT overwrite prior
   evidence.
-
-## Shape of work
-
-- Each task and pull request MUST deliver one coherent, independently
-  reviewable analysis outcome.
-- Statistical behavior changes, dependency updates and broad cleanup MUST stay
-  separate unless inseparable for correctness.
-- Scope, assumptions, supported inputs, unit/statistical effects, compatibility,
-  affected consumers and verification evidence MUST be explicit.
-- Prefer a working vertical analysis path over speculative frameworks or unused
-  adapters.
 
 ## Analysis and implementation rules
 
@@ -75,7 +56,7 @@ Follow the engineering standards and relevant README sections.
 ## Quality and documentation
 
 - Test observable statistical and contract behavior at the lowest boundary that
-  proves it. Defect fixes SHOULD begin with a failing regression test.
+  proves it.
 - Use explicit fixtures with independently checkable expected values and cover
   malformed, missing, non-finite, duplicate and contradictory evidence.
 - Tests MUST be deterministic and independent of network, locale, filesystem
@@ -85,7 +66,9 @@ Follow the engineering standards and relevant README sections.
 - Long documents MUST include the TL;DR required by CONTRIBUTING.
 - Code, fixtures, packaging, contract locks and documentation change together.
 
-## Completion
+## Verification
 
-The canonical required checks and completion-report format are defined in
-[CONTRIBUTING.md](CONTRIBUTING.md). Follow them after every work item.
+Run `make verify` and the applicable additional checks documented in
+[CONTRIBUTING.md](CONTRIBUTING.md#verification-and-constrained-environments).
+Use the [documentation map](docs/README.md) to find affected standards, operational
+guides and decisions. Report checks as passed, failed or unavailable.
