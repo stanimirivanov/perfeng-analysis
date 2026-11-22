@@ -104,7 +104,7 @@ Known limitations and follow-up:
 """,
         )
         self._write(
-            "docs/decisions/README.md",
+            "docs/adr/README.md",
             """# Architecture decision records
 
 ## TL;DR
@@ -119,7 +119,7 @@ Known limitations and follow-up:
 """,
         )
         self._write(
-            "docs/decisions/0001-use-policy.md",
+            "docs/adr/0001-use-policy.md",
             """# ADR-0001: Use policy
 
 - Status: Accepted
@@ -172,7 +172,7 @@ Context.
         issue.write_text(
             issue.read_text(encoding="utf-8").replace("## Scope", "## Included"), encoding="utf-8"
         )
-        adr = self.root / "docs/decisions/0001-use-policy.md"
+        adr = self.root / "docs/adr/0001-use-policy.md"
         adr.write_text(
             adr.read_text(encoding="utf-8").replace("- Status: Accepted", "- Status: Unknown"),
             encoding="utf-8",

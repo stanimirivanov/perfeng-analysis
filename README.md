@@ -23,7 +23,7 @@ See [AGENTS.md](AGENTS.md) for the agent workflow and
 [CONTRIBUTING.md](CONTRIBUTING.md) for repository requirements. Analysis-specific design and verification
 rules are in the
 [engineering standards](docs/development/engineering-standards.md), and durable
-decisions are recorded in [ADRs](docs/decisions/README.md). Use the
+decisions are recorded in [ADRs](docs/adr/README.md). Use the
 [documentation map](docs/README.md) to select task-specific guidance and the
 [harness guide](docs/development/harness.md) for setup and verification tiers.
 
@@ -165,6 +165,12 @@ or generate a verdict. Callers must verify artifact bytes before trusting the
 measurements referenced by a structurally and semantically valid report.
 
 ## Evaluate a candidate
+
+Policy applicability is determined by the reviewed Test ID and policy binding.
+The current evaluator still requires `normalized.testId` to equal
+`policy.metadata.name`. A reviewed pair with different names cannot be
+evaluated until that compatibility gap is addressed. See the
+[policy applicability ADR](https://github.com/stanimirivanov/perfeng-control-plane/blob/main/docs/adr/0049-bind-policy-applicability-by-reviewed-test-selection.md).
 
 `evaluate_candidate(normalized_bytes, policy_bytes)` evaluates each policy rule
 in declaration order. It checks the normalized envelope's run, source-artifact,
